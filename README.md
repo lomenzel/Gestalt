@@ -125,7 +125,7 @@ Function transformation to IR requires Nix functions to be serializable and comp
 
 ### Run the example
 ```bash
-nix shell github:lomenzel\#nix -c nix run github:lomenzel/gestalt#examples.counter.cli
+nix shell github:lomenzel/nix -c nix run github:lomenzel/gestalt\#examples.counter.cli
 ```
 i also tried to build a wrapper with recursive nix to call my nix fork in the buildPhase of a derivation that can be built using upstream nix, but id does not work yet. See my attempt at `src/lib/upstreamNixCompatibilityWrapper.nix`
 
