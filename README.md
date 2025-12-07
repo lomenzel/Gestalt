@@ -17,9 +17,13 @@ Each module receives the target and application metadata as arguments.
 
 
 (state, actions, metadata from module evaluation, target provided as argument to modules to be able to reference native effects)
-      ↓
+
+↓
+
 (intermediate representation: adds type annotations, etc.)
- ↓ ← (target)
+
+↓ ← (target)
+
 (code)
 
 
