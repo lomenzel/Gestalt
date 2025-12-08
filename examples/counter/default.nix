@@ -3,11 +3,20 @@
     (
       { target, ... }:
       let
-        sum = x: if x < 0 then 0 else x + sum (x - 1);
+        sum = x: (((abs x) * ((abs x) + 1)) / 2) * (signum x);
+        signum =
+          x:
+          if x < 0 then
+            -1
+          else if x > 0 then
+            1
+          else
+            0;
+        abs = x: if x < 0 then 0 - x else x;
       in
       {
-        state.counter.initialValue = 0;
 
+        state.counter.initialValue = 0;
         actions = {
           increment =
             { state }:

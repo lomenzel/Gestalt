@@ -47,6 +47,19 @@ pkgs: {
                 return param.toString();
               }
             ''
+
+          else if primop == "mul" then
+            ''
+              function ${name}(param1, param2) {
+                return (param1 * param2);
+              }
+            ''
+          else if primop == "div" then
+            ''
+              function ${name}(param1, param2) {
+                return (param1 / param2);
+              }
+            ''
           else
             builtins.throw ("unsupported primop in JS conversion: " + primop)
 
@@ -164,11 +177,9 @@ pkgs: {
         }
 
         actions = {
-          ${pkgs.lib.concatStringsSep "," (pkgs.lib.mapAttrsToList (name: val: 
-            name + ": " + val
-          ) actions)}
+          ${pkgs.lib.concatStringsSep "," (pkgs.lib.mapAttrsToList (name: val: name + ": " + val) actions)}
         }
-        
+
         const stdin = process.openStdin();
         stdin.addListener("data", function(d) {
             const input = d.toString().trim();
@@ -192,9 +203,7 @@ pkgs: {
         function askForInput(state) {
             console.log("Current state: ", state);
             console.log("Enter action (${
-              pkgs.lib.concatStringsSep ", " (
-                pkgs.lib.mapAttrsToList (name: val: name) actions
-              )
+              pkgs.lib.concatStringsSep ", " (pkgs.lib.mapAttrsToList (name: val: name) actions)
             }) or '_exit' to quit:");
 
         }
