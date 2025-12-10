@@ -23,16 +23,23 @@ let
 
   toRawIR = import ./toRawIR.nix pkgs;
 
-  state = toRawIR result.config.state "state" |> normalization.state;
-  actions = toRawIR result.config.actions "action" |> normalization.actions;
+  initialStatestate = result.config.initialState;
+  stateType = result.config.stateType;
+  normalizedActions = toRawIR result.config.actions "action" |> normalization.actions;
+  functions = normalizedActions.functions;
+
+  typedFunctions = import ./returnTypes.nix pkgs 
+    functions stateType actions
+    ;
 
   normalization = import ./normalize.nix pkgs;
 
 in
 appData.target.buildApplication {
-  actions = actions.actions;
-  state = state.state;
+  actions = normalizedActions.actions;
+  state = initialState;
   functions = actions.functions // state.functions;
+  types = 
   inherit (appData)
     version
     name

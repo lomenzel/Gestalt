@@ -16,7 +16,19 @@
       in
       {
 
-        state.counter.initialValue = 0;
+        initialState = {
+          counter = 0;
+        };
+
+        stateType = {
+          _type = "struct";
+          fields = {
+            counter = {
+              _type = "int";
+            };
+          };
+        };
+
         actions = {
           increment =
             { state }:

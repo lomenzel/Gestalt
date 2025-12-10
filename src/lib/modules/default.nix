@@ -1,11 +1,13 @@
 { lib, ... }:
 {
   options = {
-    state = lib.mkOption {
-      type = lib.types.attrs;
-      default = { };
-    };
     actions = lib.mkOption {
+      type = lib.types.attrs;
+    };
+    initialState = lib.mkOption {
+      type = lib.types.attrs;
+    };
+    stateType = lib.mkOption {
       type = lib.types.attrs;
     };
   };

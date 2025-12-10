@@ -5,7 +5,8 @@ pkgs: {
   };
   buildApplication =
     {
-      state,
+      initialState,
+      stateType,
       actions,
       name,
       author,
@@ -173,7 +174,7 @@ pkgs: {
 
         state = ${
 
-          exprToJS (pkgs.lib.mapAttrs (name: value: value.initialValue) state)
+          exprToJS initialState
         }
 
         actions = {
