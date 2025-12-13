@@ -33,7 +33,14 @@
             target = self.lib."x86_64-linux".targets.ir;
           }
         );
+        examples.counter.web = self.lib."x86_64-linux".buildGestaltApplication (
+          (import ./examples/counter)
+          // {
+            target = self.lib."x86_64-linux".targets.web;
+          }
+        );
       };
+
 
     };
 }

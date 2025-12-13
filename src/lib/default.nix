@@ -46,5 +46,6 @@
   };
   targets.cli = import ./targets/cli/default.nix pkgs;
   toRawIR = import ./toRawIR.nix pkgs;
+  targets.web = import ./targets/web/default.nix pkgs;
 })
 // (import ./types/helpers.nix pkgs)
