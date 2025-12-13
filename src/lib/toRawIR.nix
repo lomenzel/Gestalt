@@ -459,7 +459,7 @@ let
                 inherit reifiedFunctions;
                 value = {
                   _expr = "lambdaRef";
-                  value =
+                  value.name =
                     (pkgs.lib.findFirst (f: builtins.sameFunction f.f x)
                       (throw "no function found but there is a function!?!?!??!??! seems like a bug :/")
                       reifiedFunctions

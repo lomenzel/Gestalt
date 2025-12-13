@@ -1,12 +1,14 @@
 pkgs: {
 
-  nativeEffects = {
+  effects = {
     noop = "Placeholder_nativeEffectReference_NoOp";
   };
   buildApplication =
     {
-      state,
+      initialState,
+      stateType,
       actions,
+      types,
       name,
       author,
       version,
@@ -127,9 +129,7 @@ pkgs: {
               funcJS + "(" + pkgs.lib.concatStringsSep ", " argsJS + ")"
 
             else if expr._expr == "lambdaRef" then
-              #todo fix intermediate representation
-              if builtins.typeOf expr.value == "string" then expr.value else expr.value.name
-
+              expr.value.name
             else if expr._expr == "if" then
               let
                 condJS = exprToJS expr.value.condition;
@@ -173,28 +173,78 @@ pkgs: {
 
         state = ${
 
-          exprToJS (pkgs.lib.mapAttrs (name: value: value.initialValue) state)
+          exprToJS initialState
         }
 
         actions = {
-          ${pkgs.lib.concatStringsSep "," (pkgs.lib.mapAttrsToList (name: val: name + ": " + val) actions)}
+          ${pkgs.lib.concatStringsSep "," (pkgs.lib.mapAttrsToList (name: val: name + ": " + val.function) actions)}
         }
 
+        const actionsParams = {
+          ${pkgs.lib.concatStringsSep "," (
+          pkgs.lib.mapAttrsToList (name: val:
+            let
+              pt = val.paramType;
+              hasPtRef = builtins.typeOf pt == "set" && builtins.hasAttr "_type" pt && pt._type == "typeRef";
+              paramsFields = if hasPtRef && builtins.hasAttr pt.name types then
+                let
+                  t = builtins.getAttr pt.name types;
+                  hasParamsField = builtins.hasAttr "fields" t && builtins.hasAttr "params" t.fields;
+                  paramsType = if hasParamsField then t.fields.params else null;
+                  resolved =
+                    if paramsType == null then []
+                    else if builtins.typeOf paramsType == "set" && builtins.hasAttr "_type" paramsType && paramsType._type == "typeRef" && builtins.hasAttr paramsType.name types then
+                      let pt2 = builtins.getAttr paramsType.name types; in if builtins.hasAttr "fields" pt2 then builtins.attrNames pt2.fields else []
+                    else if builtins.typeOf paramsType == "set" && builtins.hasAttr "_type" paramsType && paramsType._type == "struct" then
+                      builtins.attrNames paramsType.fields
+                    else
+                      [];
+                in resolved
+              else [];
+              fields = pkgs.lib.concatStringsSep ", " (builtins.map (f: "\"" + f + "\"") paramsFields);
+            in
+            name + ": [" + fields + "]"
+          ) actions
+          )}
+        };
+
         const stdin = process.openStdin();
+        let pendingAction = null;
         stdin.addListener("data", function(d) {
-            const input = d.toString().trim();
-            if (input === "_exit") {
-                console.log("Exiting...");
-                process.exit();
-            } else if (actions[input]) {
-                const result = actions[input]({state: state});
-                state = result.state;
-                console.log("Action performed:", input);
-                askForInput(state);
-            } else {
-                console.log("Unknown action. Please try again.");
-                askForInput(state);
+          const input = d.toString().trim();
+
+          if (pendingAction) {
+            try {
+              const params = JSON.parse(input);
+              const result = actions[pendingAction]({state: state, params: params});
+              state = result.state;
+              console.log("Action performed:", pendingAction);
+              pendingAction = null;
+              askForInput(state);
+            } catch (e) {
+              console.log("Invalid params JSON. Please enter valid JSON for params");
             }
+            return;
+          }
+
+          if (input === "_exit") {
+            console.log("Exiting...");
+            process.exit();
+          } else if (actions[input]) {
+            const expected = actionsParams[input] || [];
+            if (expected.length && expected.length > 0) {
+              pendingAction = input;
+              askForParams(input, expected);
+            } else {
+              const result = actions[input]({state: state});
+              state = result.state;
+              console.log("Action performed:", input);
+              askForInput(state);
+            }
+          } else {
+            console.log("Unknown action. Please try again.");
+            askForInput(state);
+          }
         });
 
         console.log("Welcome to ${title} v${version} by ${author.name}!");
@@ -206,6 +256,11 @@ pkgs: {
               pkgs.lib.concatStringsSep ", " (pkgs.lib.mapAttrsToList (name: val: name) actions)
             }) or '_exit' to quit:");
 
+        }
+
+        function askForParams(actionName, fields) {
+            console.log(`Action '${"$"}{actionName}' requires params: ${"$"}{fields.join(", ")}`);
+            console.log(`Enter params as JSON (e.g. {${"$"}{fields.map((field) =>  "\"" + field + "\" : <value>").join(",")}}):`);
         }
 
         askForInput(state)

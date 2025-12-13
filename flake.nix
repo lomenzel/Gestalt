@@ -27,6 +27,12 @@
             target = self.lib."x86_64-linux".targets.cli;
           }
         );
+        examples.counter.ir = self.lib."x86_64-linux".buildGestaltApplication (
+          (import ./examples/counter)
+          // {
+            target = self.lib."x86_64-linux".targets.ir;
+          }
+        );
       };
 
     };

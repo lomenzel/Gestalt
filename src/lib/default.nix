@@ -4,7 +4,7 @@
   nixpkgs,
   ...
 }:
-rec {
+(rec {
   buildGestaltApplication =
     {
       name,
@@ -26,14 +26,16 @@ rec {
   };
 
   targets.ir = {
-    nativeEffects = {
+    effects = {
       # TODO come up with an idea for how to handle effects
       noop = "Placeholder_nativeEffectReference_NoOp";
     };
     buildApplication =
       {
-        state,
+        initialState,
+        stateType,
         actions,
+        types,
         name,
         author,
         version,
@@ -44,4 +46,5 @@ rec {
   };
   targets.cli = import ./targets/cli/default.nix pkgs;
   toRawIR = import ./toRawIR.nix pkgs;
-}
+})
+// (import ./types/helpers.nix pkgs)

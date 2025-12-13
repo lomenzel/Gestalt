@@ -23,16 +23,22 @@ let
 
   toRawIR = import ./toRawIR.nix pkgs;
 
-  state = toRawIR result.config.state "state" |> normalization.state;
-  actions = toRawIR result.config.actions "action" |> normalization.actions;
+  typeHelpers = import ./types/helpers.nix pkgs;
+
+  spTypes = typeHelpers.splitType result.config.types result.config.stateType;
+
+  actions =
+    toRawIR result.config.actions "action" |> normalization.actions spTypes.types spTypes.type;
 
   normalization = import ./normalize.nix pkgs;
 
 in
 appData.target.buildApplication {
   actions = actions.actions;
-  state = state.state;
-  functions = actions.functions // state.functions;
+  initialState = result.config.initialState;
+  stateType = spTypes.type;
+  types = actions.functions.types;
+  functions = actions.functions.functions;
   inherit (appData)
     version
     name
