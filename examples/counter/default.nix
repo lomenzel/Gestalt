@@ -3,7 +3,7 @@
     (
       { target, config, ... }:
       let
-        sum = x: (((abs x) * ((abs x) + 1)) / 2) * (signum x);
+        #sum = x: (((abs x) * ((abs x) + 1)) / 2) * (signum x);
         signum =
           x:
           if x < 0 then
@@ -14,8 +14,7 @@
             0;
         abs = x: if x < 0 then 0 - x else x;
 
-        # todo fix type system to allow ercursive functions
-        #sum = x: if x > 0 then x + sum (x - 1) else if x > 0 then x + sum (x + 1) else 0;;
+        sum = x: if x > 0 then x + sum (x - 1) else if x < 0 then x + sum (x + 1) else 0;
 
 
       in

@@ -14,6 +14,12 @@ let
 
   splitType =
     types: type:
+    if type == null then
+      {
+        inherit types;
+        type = null;
+      }
+    else
     assert
       builtins.typeOf type == "set"
       && builtins.hasAttr "_type" type
@@ -444,52 +450,58 @@ let
           inherit functions inferedFunctions;
         }
       else if expr._expr == "concatString/addition" then
-        let
-          foldRes =
-            builtins.foldl'
-              (
-                acc: curr:
-                let
-                  recCall = inferExprType {
-                    expr = curr;
-                    inherit paramType;
-                    inherit (acc) types functions inferedFunctions;
-                  };
-                  currT = followTypeRef acc.types recCall.type;
-                in
-                if
-                  !builtins.elem currT._type [
-                    "string"
-                    "float"
-                    "int"
-                  ]
-                then
-                  throw "addition or string concatenation wont work on ${builtins.toJSON currT}"
-                else if acc.pType == null then
-                  {
-                    pType = currT;
+        builtins.trace "inferring type for concatString/addition expression ${builtins.toJSON expr}" (
+          let
+            foldRes =
+              builtins.foldl'
+                (
+                  acc: curr:
+                  let
+                    recCall = inferExprType {
+                      expr = curr;
+                      inherit paramType;
+                      inherit (acc) types functions inferedFunctions;
+                    };
+                    currT = followTypeRef acc.types recCall.type;
+                  in
+                  if currT == null then
+                    {pType = null;
                     inherit (recCall) types functions inferedFunctions;
-                  }
-                else if acc.pType != currT then
-                  builtins.throw "cannot add / concat different types: ${builtins.toJSON acc.pType} with ${builtins.toJSON currT}"
-                else
-                  {
-                    pType = acc.pType;
-                    inherit (recCall) types functions inferedFunctions;
-                  }
-              )
-              {
-                pType = null;
-                inherit types functions inferedFunctions;
-              }
-              expr.value;
+                    }
+                  else if
+                    !builtins.elem currT._type [
+                      "string"
+                      "float"
+                      "int"
+                    ]
+                  then
+                    throw "addition or string concatenation wont work on ${builtins.toJSON currT}"
+                  else if acc.pType == "not initialized" then
+                    {
+                      pType = currT;
+                      inherit (recCall) types functions inferedFunctions;
+                    }
+                  else if acc.pType != currT then
+                    builtins.throw "cannot add / concat different types: ${builtins.toJSON acc.pType} with ${builtins.toJSON currT}"
+                  else
+                    {
+                      pType = acc.pType;
+                      inherit (recCall) types functions inferedFunctions;
+                    }
+                )
+                {
+                  pType = "not initialized";
+                  inherit types functions inferedFunctions;
+                }
+                expr.value;
 
-          spType = splitType foldRes.types foldRes.pType;
-        in
-        {
-          inherit (spType) type types;
-          inherit (foldRes) functions inferedFunctions;
-        }
+            spType = splitType foldRes.types foldRes.pType;
+          in
+          {
+            inherit (spType) type types;
+            inherit (foldRes) functions inferedFunctions;
+          }
+        )
 
       else if expr._expr == "select" then
         let
@@ -568,9 +580,23 @@ let
               #followTypeRef types existingParamType'
               else
                 null;
+            existingReturnType = if builtins.hasAttr "returnType" f then f.returnType else null;
           in
           if argTypes == existingParamType then
-            throw "not hanled yet case where argTypes equals existingParamType -> should be at the end the returntype of the called function"
+            if existingReturnType != null then
+              let
+                spReturnType = splitType argTypesRes.types existingReturnType;
+              in
+              {
+                type = spReturnType.type;
+                types = spReturnType.types;
+                inherit (argTypesRes) functions inferedFunctions;
+              }
+            else
+              {
+                type = existingReturnType;
+                inherit (argTypesRes) types functions inferedFunctions;
+              }
 
           else if existingParamType == null then
             let
@@ -631,7 +657,18 @@ let
         if conditionType._type != "bool" then
           throw "condition of if expression must be a boolean or evaluate at runtime to a boolean but it is of type ${builtins.toJSON conditionType}"
         else if thenType != elseType then
-          throw "if expressions must return the same type in both branches ${expr} #### returns ${builtins.toJSON thenType} #### in one branch and ${builtins.toJSON elseType} in the other"
+          if thenType == null then
+            elseTypeRes
+          else if elseType == null then
+            let
+              spType = splitType newTypes thenType;
+              in
+            {
+              inherit (spType) type types;
+              inherit (elseTypeRes)  functions inferedFunctions;
+            }
+          else
+            throw "if expressions must return the same type in both branches ${expr} #### returns ${builtins.toJSON thenType} #### in one branch and ${builtins.toJSON elseType} in the other"
         else
           elseTypeRes
 
@@ -703,7 +740,7 @@ let
 
   followTypeRef =
     types: type:
-    if type._type == "typeRef" then
+    if type != null && type._type == "typeRef" then
       if builtins.hasAttr type.name types then
         followTypeRef types types.${type.name}
       else
