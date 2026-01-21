@@ -268,8 +268,7 @@ let
                 recCall = toIR_ acc.fs curr.value (name + "." + curr.name);
               in
 
-              acc
-              // {
+              {
                 result = acc.result // {
                   ${curr.name} = recCall.value;
                 };
@@ -304,9 +303,7 @@ let
               let
                 recCall = toIR_ acc.fs curr (name + (builtins.toString acc.index));
               in
-
-              acc
-              // {
+              {
                 result = acc.result ++ [ recCall.value ];
                 fs = recCall.reifiedFunctions;
                 index = acc.index + 1;
@@ -349,9 +346,7 @@ let
                     let
                       recCall = toIR_ acc.fs curr.value (name + "." + curr.name);
                     in
-
-                    acc
-                    // {
+                    {
                       result = acc.result // {
                         ${curr.name} = recCall.value;
                       };
@@ -372,26 +367,40 @@ let
             }
 
           else if builtins.typeOf x == "set" && builtins.hasAttr "_expr" x && x._expr == "lambda" then
+            if builtins.all 
+            (f: f.value.f != x) 
+            (builtins.filter (e: builtins.typeOf e.value.f == "set") (pkgs.lib.attrsToList reifiedFunctions) )
+            then
+            let
+              newFunctionId = findNewFunctionName reifiedFunctions;
+              recCall = (
+                toIR_ (
+                  reifiedFunctions // {
+                    ${newFunctionId} = {
+                      id = newFunctionId;
+                      f = x;
+                    };
+                  }
+              
+                ) x.value (name + "inside Lambda")
+              );
+            in
             {
               value =
-                let
-                  newFunctionId =
-                    name + "lambda" + (builtins.toString (builtins.length reifiedFunctions))
-                    |> builtins.hashString "sha256"
-                    |> (hash: "function_" + hash);
-                in
+
                 {
                   _expr = "lambda";
                   value = {
                     implementation = {
-                      value = (toIR_ reifiedFunctions x.value (name + "inside Lambda")).value;
+                      value = recCall.value;
                       _expr = "lambda";
                     };
                     id = newFunctionId;
                   };
                 };
-              inherit reifiedFunctions;
+              inherit (recCall) reifiedFunctions;
             }
+            else throw "todo"
 
           else if builtins.typeOf x == "list" then
             let
@@ -402,9 +411,7 @@ let
                     let
                       recCall = toIR_ acc.fs curr (name + (builtins.toString acc.index));
                     in
-
-                    acc
-                    // {
+                    {
                       result = acc.result ++ [ recCall.value ];
                       fs = recCall.reifiedFunctions;
                       index = acc.index + 1;
@@ -423,24 +430,26 @@ let
             }
 
           else if builtins.typeOf x == "lambda" then
-            if builtins.all (f: !builtins.sameFunction f.f x) reifiedFunctions then
+            if builtins.all 
+            (f: !builtins.sameFunction f.value.f x) 
+            (builtins.filter (e: builtins.typeOf e.value.f == "lambda") (pkgs.lib.attrsToList reifiedFunctions) )
+            then
+
+              let
+                newFunctionId = findNewFunctionName reifiedFunctions;
+                recCall = toIR_ (
+                  reifiedFunctions
+                  // {
+                    ${newFunctionId} = {
+                      id = newFunctionId;
+                      f = x;
+                    };
+                  }
+
+                ) (builtins.reify x).value name;
+              in
               {
                 value =
-                  let
-                    newFunctionId =
-                      name + (builtins.toString (builtins.length reifiedFunctions))
-                      |> builtins.hashString "sha256"
-                      |> (hash: "function_" + hash);
-                    recCall = toIR_ (
-                      reifiedFunctions
-                      ++ [
-                        {
-                          id = newFunctionId;
-                          f = x;
-                        }
-                      ]
-                    ) (builtins.reify x).value name;
-                  in
 
                   {
                     _expr = "lambda";
@@ -452,7 +461,7 @@ let
                       id = newFunctionId;
                     };
                   };
-                inherit reifiedFunctions;
+                inherit (recCall) reifiedFunctions;
               }
             else
               {
@@ -460,15 +469,25 @@ let
                 value = {
                   _expr = "lambdaRef";
                   value.name =
-                    (pkgs.lib.findFirst (f: builtins.sameFunction f.f x)
+                    (pkgs.lib.findFirst (f: builtins.typeOf f.value.f == "lambda" && builtins.sameFunction f.value.f x)
                       (throw "no function found but there is a function!?!?!??!??! seems like a bug :/")
-                      reifiedFunctions
-                    ).id;
+                      (pkgs.lib.attrsToList reifiedFunctions)
+                    ).value.id;
                 };
               }
           else
             throw ("unknown value type handed to toIR" + (builtins.toString (builtins.typeOf x)))
         )
       );
+
+  findNewAttrName =
+    attrs: prefix: i:
+    let
+      attrName = "${prefix}${toString i}";
+    in
+    if builtins.hasAttr attrName attrs then findNewAttrName attrs prefix (i + 1) else attrName;
+
+  findNewFunctionName = functions: findNewAttrName functions "f" 0;
+
 in
-value: name: (toIR_ [ ] value name).value
+value: name: (toIR_ { } value name).value

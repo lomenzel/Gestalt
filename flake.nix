@@ -33,6 +33,18 @@
             target = self.lib."x86_64-linux".targets.ir;
           }
         );
+        examples.http.cli = self.lib."x86_64-linux".buildGestaltApplication (
+          (import ./examples/http)
+          // {
+            target = self.lib."x86_64-linux".targets.cli;
+          }
+        );
+        examples.practiceHelper.cli = self.lib."x86_64-linux".buildGestaltApplication (
+          (import ./examples/practiceHelper)
+          // {
+            target = self.lib."x86_64-linux".targets.cli;
+          }
+        );
         examples.counter.web = self.lib."x86_64-linux".buildGestaltApplication (
           (import ./examples/counter)
           // {

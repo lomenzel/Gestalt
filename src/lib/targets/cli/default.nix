@@ -1,14 +1,11 @@
 pkgs: {
 
-  effects = {
-    noop = "Placeholder_nativeEffectReference_NoOp";
-  };
+  capabilities = import ./capabilities.nix;
   buildApplication =
     {
       initialState,
       stateType,
       actions,
-      types,
       name,
       author,
       version,
@@ -24,10 +21,11 @@ pkgs: {
         builtins.map (func: toJS func) (pkgs.lib.attrsToList functions)
       );
       jsFile = pkgs.writeText "app.js" ''
+        ${jsHelpers.generalHelpers}
+
         ${jsFunctions}
 
         state = ${
-
           exprToJS initialState
         }
 
@@ -43,43 +41,21 @@ pkgs: {
               name: val:
               let
                 pt = val.paramType;
-                hasPtRef = builtins.typeOf pt == "set" && builtins.hasAttr "_type" pt && pt._type == "typeRef";
-                paramsFields =
-                  if hasPtRef && builtins.hasAttr pt.name types then
-                    let
-                      t = builtins.getAttr pt.name types;
-                      hasParamsField = builtins.hasAttr "fields" t && builtins.hasAttr "params" t.fields;
-                      paramsType = if hasParamsField then t.fields.params else null;
-                      resolved =
-                        if paramsType == null then
-                          [ ]
-                        else if
-                          builtins.typeOf paramsType == "set"
-                          && builtins.hasAttr "_type" paramsType
-                          && paramsType._type == "typeRef"
-                          && builtins.hasAttr paramsType.name types
-                        then
-                          let
-                            pt2 = builtins.getAttr paramsType.name types;
-                          in
-                          if builtins.hasAttr "fields" pt2 then builtins.attrNames pt2.fields else [ ]
-                        else if
-                          builtins.typeOf paramsType == "set"
-                          && builtins.hasAttr "_type" paramsType
-                          && paramsType._type == "struct"
-                        then
-                          builtins.attrNames paramsType.fields
-                        else
-                          [ ];
-                    in
-                    resolved
-                  else
-                    [ ];
+                hasPt = builtins.typeOf pt == "set" && builtins.hasAttr "_type" pt && builtins.hasAttr "params" pt.fields;
+                paramsFields = if hasPt then builtins.attrNames pt.fields.params.fields else [ ];
                 fields = pkgs.lib.concatStringsSep ", " (builtins.map (f: "\"" + f + "\"") paramsFields);
               in
               name + ": [" + fields + "]"
             ) actions
           )}
+        };
+
+        function invokeAction(actionName, params) {
+          result = actions[actionName]({state: state, params: params});
+          state = result.state;
+          console.log("Action performed:", actionName);
+          executeEffect(result.effect);
+
         };
 
         const stdin = process.openStdin();
@@ -90,13 +66,13 @@ pkgs: {
           if (pendingAction) {
             try {
               const params = JSON.parse(input);
-              const result = actions[pendingAction]({state: state, params: params});
-              state = result.state;
-              console.log("Action performed:", pendingAction);
+              console.log("you entered params:", params);
+              invokeAction(pendingAction, params);
               pendingAction = null;
               askForInput(state);
             } catch (e) {
-              console.log("Invalid params JSON. Please enter valid JSON for params");
+              pendingAction = null;
+              console.log(e);
             }
             return;
           }
@@ -110,9 +86,7 @@ pkgs: {
               pendingAction = input;
               askForParams(input, expected);
             } else {
-              const result = actions[input]({state: state});
-              state = result.state;
-              console.log("Action performed:", input);
+              invokeAction(input, { });
               askForInput(state);
             }
           } else {
@@ -136,6 +110,52 @@ pkgs: {
             console.log(`Action '${"$"}{actionName}' requires params: ${"$"}{fields.join(", ")}`);
             console.log(`Enter params as JSON (e.g. {${"$"}{fields.map((field) =>  "\"" + field + "\" : <value>").join(",")}}):`);
         }
+
+        function executeEffect(effect) {
+        console.log("Executing effect:", effect.id);
+          effectFunctions[effect.id](effect.params);
+        }
+
+        effectFunctions = {
+          "noop": () => {
+            // Do nothing
+          },
+          "log": (params) => {
+            console.log("LOG EFFECT:", params.message);
+          },
+          "httpRequest": (params) => {
+          
+            const https = require('https');
+
+            if (params.method.toUpperCase() === "GET") {
+              https.get(params.url, (resp) => {
+                let data = "";
+                resp.on("data", (chunk) => {
+                  data += chunk;
+                });
+                resp.on("end", () => {
+                  invokeAction(params.callBackActionId, {
+                    status: resp.statusCode,
+                    body: data,
+                    headers: resp.headers
+                  });
+                });
+              });
+            }
+          },
+          "random": (params) => {
+            const min = params.from;
+            const max = params.to;
+            const result = Math.floor(Math.random() * (max - min + 1)) + min;
+            invokeAction(params.callbackActionId, {
+              result: result
+            });
+          },
+          "invokeAction": (params) => {
+            invokeAction(params.actionId, params.params);
+          }
+        }
+
 
         askForInput(state)
 

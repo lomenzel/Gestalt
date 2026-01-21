@@ -566,17 +566,17 @@ let
                 expr.value.args;
             argTypes =
               if builtins.typeOf argTypesRes.ts == "list" && builtins.length argTypesRes.ts == 1 then
-                builtins.head argTypesRes.ts
+                builtins.head argTypesRes.ts |> followTypeRef argTypesRes.types
               else
-                argTypesRes.ts;
+                argTypesRes.ts |> builtins.map (t: followTypeRef argTypesRes.types t);
             existingParamType =
               if builtins.typeOf existingParamType' == "list" then
                 if builtins.length existingParamType' == 1 then
-                  (builtins.head existingParamType')
+                  followTypeRef types (builtins.head existingParamType')
                 else
                   builtins.map (t: followTypeRef types t) existingParamType'
               else if existingParamType' != null then
-                existingParamType'
+                followTypeRef types existingParamType'
               #followTypeRef types existingParamType'
               else
                 null;
@@ -600,8 +600,12 @@ let
 
           else if existingParamType == null then
             let
+              argTypesSplit = if builtins.typeOf argTypes == "list" then builtins.map (e: (splitType argTypesRes.types e).type) argTypes
+              else (splitType argTypesRes.types argTypes).type;
+
               funWithSetArgTypes = f // {
-                paramType = argTypes;
+                # splitTypes
+                paramType = argTypesSplit;
               };
               recCallInferType = inferType {
                 functionName = fName;
@@ -617,7 +621,12 @@ let
             }
 
           else
-            throw "unsupported case in call expression type inference ${builtins.toJSON expr}"
+            # todo rewrite the expr to use a new function id and duplicate the old function with new param types
+            throw ''unsupported case in call expression type inference (this has to be the case where the function once got infered with different argument types. so we need to duplicate this function in IR. if you encounter this error, please file a bug report) ${builtins.toJSON expr}
+            
+            existing param type: ${builtins.toJSON existingParamType}
+            argument types: ${builtins.toJSON argTypes}
+            ''
         )
       else if expr._expr == "if" then
         let

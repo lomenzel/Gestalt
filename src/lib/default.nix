@@ -26,7 +26,7 @@
   };
 
   targets.ir = {
-    effects = {
+    capabilities.effects = {
       # TODO come up with an idea for how to handle effects
       noop = "Placeholder_nativeEffectReference_NoOp";
     };
@@ -35,7 +35,6 @@
         initialState,
         stateType,
         actions,
-        types,
         name,
         author,
         version,

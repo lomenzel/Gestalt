@@ -28,17 +28,18 @@ let
   spTypes = typeHelpers.splitType result.config.types result.config.stateType;
 
   actions =
-    toRawIR result.config.actions "action" |> normalization.actions spTypes.types spTypes.type;
+    toRawIR result.config.actions "action" |> normalizeActions spTypes.types spTypes.type;
 
-  normalization = import ./normalize.nix pkgs;
+  inherit (import ./normalizer/default.nix pkgs) normalizeActions;
 
 in
 appData.target.buildApplication {
   actions = actions.actions;
   initialState = result.config.initialState;
   stateType = spTypes.type;
-  types = actions.functions.types;
-  functions = actions.functions.functions;
+  #types = spTypes.types;
+  # TODO actions structure has changed
+  functions = actions.functions;
   inherit (appData)
     version
     name

@@ -22,7 +22,7 @@ let
         if action.function._expr == "lambda" then
           {
             function = action.function.value.id;
-            paramType = functions.functions.${action.function.value.id}.paramType;
+            paramType = functions.${action.function.value.id}.paramType;
 
           }
         else if action.function._expr == "lambdaRef" then
@@ -64,30 +64,33 @@ let
         |> pkgs.lib.listToAttrs
         |> normalizeAllFunctions
 
-        |> (
-          allFunctions:
+      # TODO type system needs design decisions first
+      # |> (
+      #   allFunctions:
 
-          let
-            fNamesWithParamTypes =
-              pkgs.lib.filterAttrs (_: f: builtins.hasAttr "paramType" f) allFunctions
-              |> pkgs.lib.attrsToList
-              |> builtins.map (e: e.name);
-          in
-          builtins.foldl'
-            (
-              acc: curr:
-              typeHelpers.inferType {
-                inherit (acc) functions types;
-                functionName = curr;
-              }
-            )
-            {
-              functions = allFunctions;
-              inherit types;
-            }
-            fNamesWithParamTypes
+      #   let
+      #     fNamesWithParamTypes =
+      #       pkgs.lib.filterAttrs (_: f: builtins.hasAttr "paramType" f) allFunctions
+      #       |> pkgs.lib.attrsToList
+      #       |> builtins.map (e: e.name);
+      #   in
+      #   builtins.foldl'
+      #     (
+      #       acc: curr:
+      #       typeHelpers.inferType {
+      #         inherit (acc) functions types;
+      #         functionName = curr;
+      #       }
 
-        );
+      #     )
+      #     {
+      #       functions = allFunctions;
+      #       inherit types;
+      #     }
+      #     fNamesWithParamTypes
+
+      # )
+      ;
 
     in
 
@@ -192,11 +195,14 @@ let
             (id // formals);
 
           parseResult = parseBody rawFunction.value.implementation.value.body (
-            parseVariableSubstitution rawFunction.value.implementation.value.arguments
+            [
+              (parseVariableSubstitution rawFunction.value.implementation.value.arguments)
+            ]
+            ++ (rawFunction.value.outerScopes or [ ])
           );
 
           parseBody =
-            rawBody: varSubstitution:
+            rawBody: scopes:
             (
               if
                 builtins.elem (builtins.typeOf rawBody) [
@@ -215,7 +221,7 @@ let
               else if builtins.typeOf rawBody == "list" then
 
                 let
-                  recCall = builtins.map (e: parseBody e varSubstitution) rawBody;
+                  recCall = builtins.map (e: parseBody e scopes) rawBody;
                 in
                 {
                   helperFunctions = builtins.foldl' (acc: curr: acc // curr.helperFunctions) { } recCall;
@@ -227,7 +233,6 @@ let
                 && (
                   !builtins.hasAttr "_expr" rawBody
                   || rawBody._expr == "lambdaRef"
-                  || rawBody._expr == "call"
                   || rawBody._expr == "if"
                   || rawBody._expr == "primop"
                   || rawBody._expr == "concatString/addition"
@@ -245,7 +250,7 @@ let
                   parsedFields = pkgs.lib.mapAttrs (
                     name: field:
                     let
-                      parsedField = parseBody field varSubstitution;
+                      parsedField = parseBody field scopes;
                     in
                     {
                       helperFunctions = parsedField.helperFunctions;
@@ -276,7 +281,7 @@ let
                       };
                     };
                   };
-                } varSubstitution
+                } scopes
 
               else if builtins.typeOf rawBody == "set" && rawBody._expr == "notEquals" then
                 parseBody {
@@ -288,7 +293,7 @@ let
                       e2 = rawBody.value.e2;
                     };
                   };
-                } varSubstitution
+                } scopes
               else if builtins.typeOf rawBody == "set" && rawBody._expr == "implies" then
                 parseBody {
                   _expr = "or";
@@ -308,7 +313,9 @@ let
                 in
                 {
                   helperFunctions = {
-                    ${rawBody.value.id} = rawBody.value;
+                    ${rawBody.value.id} = rawBody.value // {
+                      outerScopes = scopes;
+                    };
                   };
                   body = {
                     _expr = "lambdaRef";
@@ -320,15 +327,77 @@ let
 
               else if builtins.typeOf rawBody == "set" && rawBody._expr == "var" then
                 # todo
-                if builtins.hasAttr rawBody.value.name varSubstitution then
+                if builtins.hasAttr rawBody.value.name (builtins.head scopes) then
+
                   {
                     helperFunctions = { };
-                    body = varSubstitution.${rawBody.value.name};
+                    body =
+                      let
+                        value = (builtins.head scopes).${rawBody.value.name};
+                      in
+                      value
+                      // {
+                        field = (if builtins.hasAttr "field" value then [ "__value" ] ++ value.field else [ "__value" ]);
+                      };
                   }
-                # parseBody (varSubstitution.${rawBody.value.name}) varSubstitution
+                else if (pkgs.lib.any (scope: builtins.hasAttr rawBody.value.name scope) scopes) then
+                  #throw "variable reference across scopes not yet implemented: ${rawBody.value.name}, scopes: ${builtins.toJSON scopes}"
+                  {
+                    helperFunctions = { };
+                    body =
+                      let
+                        outerScopeValue =
+                          (pkgs.lib.findFirst (builtins.hasAttr rawBody.value.name)
+                            (throw "this should never ever happen. there exists a scope with the variable, but findFirst failed")
+                            scopes
+                          ).${rawBody.value.name};
+                      in
+                      outerScopeValue
+                      // {
+                        field = (
+                          if builtins.hasAttr "field" outerScopeValue then
+                            [ "__env" ] ++ [ rawBody.value.name ] ++ outerScopeValue.field
+                          else
+                            [ "__env" ] ++ [ rawBody.value.name ]
+                        );
+                      };
+                  }
                 else
-                  throw "Unknown variable reference: ${rawBody.value.name}"
+                  throw "Unknown variable reference: ${rawBody.value.name}, scopes: ${builtins.toJSON scopes}"
 
+              else if builtins.typeOf rawBody == "set" && rawBody._expr == "call" then
+                #throw "call looks like : ${builtins.toJSON rawBody} - call not yet implemented in normalization"
+
+                # only rewrite arguments to be a set of {__env, __value} with env is outer __env // params... and value is the actual parameter
+                let
+                  modifiedArgs = builtins.foldl ( arg:
+                    acc: curr:
+                    let
+                      parsedArg = parseBody curr scopes;
+
+                    in
+                     {
+                      helperFunctions = acc.helperFunctions // parsedArg.helperFunctions;
+                      value = acc.args ++ [
+                        {
+                          _expr = "set";
+                          value = {
+                            __env = {
+                              _expr = "var";
+                              value = {
+                                name = "__env";
+                              };
+                            };
+                            __value = parsedArg.body;
+                          };
+                        }
+                      ];
+                     }
+                  ) {helperFunctions = {}; args = []; } rawBody.value.args;
+                in
+                {
+
+                }
               else
                 builtins.throw (
                   "Unknown/Unsupported body type: ${builtins.typeOf rawBody} with _expr: ${
