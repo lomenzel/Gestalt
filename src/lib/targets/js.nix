@@ -14,131 +14,165 @@ let
 
       if primop == "lessThan" then
         ''
-          function ${name}(param1, param2) {
-            return (param1 < param2);
+          function ${name}(scope) {
+            const __arg1 = scope.__value;
+            return function(scope) {
+              return (__arg1 < scope.__value);
+            };
           }
         ''
 
       else if primop == "sub" then
         ''
-          function ${name}(param1, param2) {
-
-            if(typeof param1 !== "number" || typeof param2 !== "number") {
-              throw new TypeError(`sub received non-number parameters: ${"$"}{param1}, ${"$"}{param2}`);
-            }
-            return (param1 - param2);
-          }''
+          function ${name}(scope) {
+            const __arg1 = scope.__value;
+            return function(scope) {
+              return (__arg1 - scope.__value);
+            };
+          }
+        ''
       else if primop == "toString" then
         ''
-          function ${name}(param) {
-            return param.toString();
+          function ${name}(scope) {
+            return scope.__value.toString();
           }
         ''
 
       else if primop == "mul" then
         ''
-          function ${name}(param1, param2) {
-            return (param1 * param2);
+          function ${name}(scope) {
+            const __arg1 = scope.__value;
+            return function(scope) {
+              return (__arg1 * scope.__value);
+            };
           }
         ''
       else if primop == "div" then
         ''
-          function ${name}(param1, param2) {
-            return (param1 / param2);
+          function ${name}(scope) {
+            const __arg1 = scope.__value;
+            return function(scope) {
+              return (__arg1 / scope.__value);
+            };
           }
         ''
       else if primop == "genList" then
         ''
-          function ${name}(func, count) {
-            console.log("genList called with count:", count, "and func:", func);
-            const result = [];
-            for (let i = 0; i < count; i++) {
-              console.log("genList iteration:", i);
-              result.push(func(i));
-              console.log("genList intermediate result:", result);
-            }
-            console.log("returning from genList:", result);
-            return result;
+          function ${name}(scope) {
+            const func = scope.__value;
+            return function(scope) {
+              const count = scope.__value;
+              const result = [];
+              for (let i = 0; i < count; i++) {
+                result.push(func({...scope, __value: i}));
+              }
+              return result;
+            };
           }
         ''
         else if primop == "concatMap" then
         ''
-          function ${name}(func, list) {
-            console.log("concatMap called with list:", list, "and func:", func);
-            const result = [];
-            for (let i = 0; i < list.length; i++) {
-              const sublist = func(list[i]);
-              for (let j = 0; j < sublist.length; j++) {
-                result.push(sublist[j]);
+          function ${name}(scope) {
+            const func = scope.__value;
+            return function(scope) {
+              const list = scope.__value;
+              const result = [];
+              for (let i = 0; i < list.length; i++) {
+                const sublist = func({...scope, __value: list[i]});
+                for (let j = 0; j < sublist.length; j++) {
+                  result.push(sublist[j]);
+                }
               }
-            }
-            console.log("returning from concatMap:", result);
-            return result;
+              return result;
+            };
           }
         ''
           else if primop == "filter" then
         ''
-          function ${name}(func, list) {
-            const result = [];
-            for (let i = 0; i < list.length; i++) {
-              if (func(list[i])) {
-                result.push(list[i]);
+          function ${name}(scope) {
+            const func = scope.__value;
+            return function(scope) {
+              const list = scope.__value;
+              const result = [];
+              for (let i = 0; i < list.length; i++) {
+                if (func({...scope, __value: list[i]})) {
+                  result.push(list[i]);
+                }
               }
-            }
-            return result;
+              return result;
+            };
           }
         ''
           else if primop == "elemAt" then
 
         ''
-          function ${name}(list, index) {
-            return list[index];
+          function ${name}(scope) {
+            const list = scope.__value;
+            return function(scope) {
+              return list[scope.__value];
+            };
           }
         ''
 
           else if primop == "length" then
         ''
-          function ${name}(list) {
-            return list.length;
+          function ${name}(scope) {
+            return scope.__value.length;
           }
         ''
           else
             if primop == "all" then
               ''
-                function ${name}(func, list) {
-                  for (let i = 0; i < list.length; i++) {
-                    if (!func(list[i])) {
-                      return false;
+                function ${name}(scope) {
+                  const func = scope.__value;
+                  return function(scope) {
+                    const list = scope.__value;
+                    for (let i = 0; i < list.length; i++) {
+                      if (!func({...scope, __value: list[i]})) {
+                        return false;
+                      }
                     }
-                  }
-                  return true;
+                    return true;
+                  };
                 }
               '' else
           if primop == "elem" then
             ''
-              function ${name}(item, list) {
-                return elem(item, list);
+              function ${name}(scope) {
+                const item = scope.__value;
+                return function(scope) {
+                  return elem(item, scope.__value);
+                };
               }
             ''
           else if primop == "map" then
             ''
-              function ${name}(func, list) {
-                const result = [];
-                for (let i = 0; i < list.length; i++) {
-                  result.push(func(list[i]));
-                }
-                return result;
+              function ${name}(scope) {
+                const func = scope.__value;
+                return function(scope) {
+                  const list = scope.__value;
+                  const result = [];
+                  for (let i = 0; i < list.length; i++) {
+                    result.push(func({...scope, __value: list[i]}));
+                  }
+                  return result;
+                };
               }
             ''
             else
         builtins.throw ("unsupported primop in JS conversion: " + primop)
 
     else
+      let
+        hasIdentifier = func.value ? arguments && func.value.arguments.identifier or null != null;
+        identifierName = if hasIdentifier then func.value.arguments.identifier else null;
+        identifierExtraction = if hasIdentifier then
+          "scope = {...scope, ${identifierName}: scope.__value};\n          "
+        else "";
+      in
       ''
-        function ${func.name}(param) {
-          console.log("Function ${func.name} called with param:", param);
-          result =  ${exprToJS func.value.body}
-          console.log("Function ${func.name} returning:", result);
+        function ${func.name}(scope) {
+          ${identifierExtraction}result =  ${exprToJS func.value.body}
           return result;
         }
       '';
@@ -169,10 +203,10 @@ let
         "[" + pkgs.lib.concatStringsSep ", " jsItems + "]"
 
       else if builtins.typeOf expr == "set" && builtins.hasAttr "_expr" expr then
-        if expr._expr == "param" then
-          "(param"
-          + pkgs.lib.concatStringsSep "" ((builtins.map (field: ("." + field)) (expr.field or [ ])))
-          + ")"
+        if expr._expr == "scopeRef" then
+          "(scope.${expr.value.name}${
+            pkgs.lib.concatStringsSep "" ((builtins.map (field: (".${field}")) (expr.value.field or [ ])))
+          })"
 
         else if expr._expr == "update" then
           let
@@ -192,15 +226,19 @@ let
         else if expr._expr == "select" then
           "((${exprToJS expr.value.expression}).${pkgs.lib.concatStringsSep "." expr.value.path})"
 
+        else if expr._expr == "scope" then
+          "scope"
+
         else if expr._expr == "call" then
           let
             funcJS = exprToJS expr.value.function;
             argsJS = builtins.map exprToJS expr.value.args;
           in
-          funcJS + "(" + pkgs.lib.concatStringsSep ", " argsJS + ")"
+          # Curried function calls: f(arg1)(arg2)(arg3) instead of f(arg1, arg2, arg3)
+          funcJS + pkgs.lib.concatStringsSep "" (builtins.map (arg: "(" + arg + ")") argsJS)
 
         else if expr._expr == "lambdaRef" then
-          expr.value.name
+          "((_scope) =>{ return ${expr.value.name}( {...scope, ..._scope} )})"
         else if expr._expr == "if" then
           let
             condJS = exprToJS expr.value.condition;

@@ -1,14 +1,11 @@
 pkgs: {
 
-  effects = {
-    noop = "Placeholder_nativeEffectReference_NoOp";
-  };
+  capabilities = import ../cli/capabilities.nix;
   buildApplication =
     {
       initialState,
       stateType,
       actions,
-      types,
       name,
       author,
       version,
@@ -35,11 +32,13 @@ pkgs: {
         <h1>Welcome to ${title} v${version} by ${author.name}!</h1>
 
      <script>
+${jsHelpers.generalHelpers}
+
 ${jsFunctions}
 
-let state = ${exprToJS initialState};
+state = ${exprToJS initialState};
 
-const actions = {
+actions = {
   ${pkgs.lib.concatStringsSep "," (
     pkgs.lib.mapAttrsToList (name: val: name + ": " + val.function) actions
   )}
@@ -51,37 +50,79 @@ const actionsParams = {
       name: val:
       let
         pt = val.paramType;
-        hasPtRef = builtins.typeOf pt == "set" && builtins.hasAttr "_type" pt && pt._type == "typeRef";
-        paramsFields =
-          if hasPtRef && builtins.hasAttr pt.name types then
-            let
-              t = builtins.getAttr pt.name types;
-              hasParamsField = builtins.hasAttr "fields" t && builtins.hasAttr "params" t.fields;
-              paramsType = if hasParamsField then t.fields.params else null;
-              resolved =
-                if paramsType == null then [ ]
-                else if
-                  builtins.typeOf paramsType == "set"
-                  && builtins.hasAttr "_type" paramsType
-                  && paramsType._type == "typeRef"
-                  && builtins.hasAttr paramsType.name types
-                then
-                  let pt2 = builtins.getAttr paramsType.name types;
-                  in if builtins.hasAttr "fields" pt2 then builtins.attrNames pt2.fields else [ ]
-                else if
-                  builtins.typeOf paramsType == "set"
-                  && builtins.hasAttr "_type" paramsType
-                  && paramsType._type == "struct"
-                then
-                  builtins.attrNames paramsType.fields
-                else [ ];
-            in resolved
-          else [ ];
+        hasPt = builtins.typeOf pt == "set" && builtins.hasAttr "_type" pt && builtins.hasAttr "params" pt.fields;
+        paramsFields = if hasPt then builtins.attrNames pt.fields.params.fields else [ ];
         fields = pkgs.lib.concatStringsSep ", " (builtins.map (f: "\"" + f + "\"") paramsFields);
       in
       name + ": [" + fields + "]"
     ) actions
   )}
+};
+
+function invokeAction(actionName, params) {
+  result = actions[actionName]({state: state, params: params});
+  state = result.state;
+  log("Action performed: " + actionName);
+  executeEffect(result.effect);
+  renderState();
+}
+
+function executeEffect(effect) {
+  log("Executing effect: " + effect.id);
+  effectFunctions[effect.id](effect.params);
+}
+
+effectFunctions = {
+  "noop": () => {
+    // Do nothing
+  },
+  "log": (params) => {
+    log("LOG EFFECT: " + params.message);
+  },
+  "httpRequest": (params) => {
+    if (params.method.toUpperCase() === "GET") {
+      fetch(params.url)
+        .then(resp => resp.text().then(body => ({
+          status: resp.status,
+          body: body,
+          headers: Object.fromEntries(resp.headers.entries())
+        })))
+        .then(data => {
+          invokeAction(params.callBackActionId, data);
+        })
+        .catch(e => {
+          log("HTTP Error: " + e.message);
+        });
+    } else {
+      fetch(params.url, {
+        method: params.method,
+        body: params.body,
+        headers: params.headers || {}
+      })
+        .then(resp => resp.text().then(body => ({
+          status: resp.status,
+          body: body,
+          headers: Object.fromEntries(resp.headers.entries())
+        })))
+        .then(data => {
+          invokeAction(params.callBackActionId, data);
+        })
+        .catch(e => {
+          log("HTTP Error: " + e.message);
+        });
+    }
+  },
+  "random": (params) => {
+    const min = params.from;
+    const max = params.to;
+    const result = Math.floor(Math.random() * (max - min + 1)) + min;
+    invokeAction(params.callbackActionId, {
+      result: result
+    });
+  },
+  "invokeAction": (params) => {
+    invokeAction(params.actionId, params.params);
+  }
 };
 
 /* ---------- UI ---------- */
@@ -167,14 +208,9 @@ runBtn.addEventListener("click", () => {
   }
 
   try {
-    const result = actions[actionName](
-      params ? { state, params } : { state }
-    );
-    state = result.state;
-    log(`Action executed: ${"$"}{actionName}`);
-    renderState();
+    invokeAction(actionName, params ? params : {});
   } catch (e) {
-    log(`Error: ${"$"}{e.message}`);
+    log("Error: " + e.message);
   }
 });
 
@@ -187,7 +223,15 @@ renderParams(actionSelect.value);
       </html>
 
       '';
+      webDir = pkgs.runCommand "${name}-web" {} ''
+        mkdir -p $out
+        cp ${indexHTML} $out/index.html
+      '';
     in
-    indexHTML;
+    pkgs.writeShellScriptBin name ''
+      echo "Serving ${title} at http://localhost:8080"
+      cd ${webDir}
+      ${pkgs.python3}/bin/python3 -m http.server 8080
+    '';
 
 }

@@ -3,56 +3,43 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nix = {
       url = "github:lomenzel/nix";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
+    flake-utils.url = "github:numtide/flake-utils";
   };
 
   outputs =
     {
       self,
       nixpkgs,
+      flake-utils,
       nix,
-    }:
-    {
-      lib."x86_64-linux" = import ./src/lib {
+    }@inputs:
+    flake-utils.lib.eachDefaultSystem (system:
+    let 
+      lib = self.lib.${system};
+      pkgs = import nixpkgs { inherit system; };
+    in {
+      lib = import ./src/lib {
         pkgs = import nixpkgs { system = "x86_64-linux"; };
-        nix = nix.packages."x86_64-linux".default;
-        inherit nixpkgs;
       };
-      packages."x86_64-linux" = rec {
-        default = examples.counter.cli;
-        examples.counter.cli = self.lib."x86_64-linux".buildGestaltApplication (
-          (import ./examples/counter)
-          // {
-            target = self.lib."x86_64-linux".targets.cli;
-          }
+      packages =  {
+        examples = builtins.readDir ./examples
+          |> pkgs.lib.mapAttrs (example: _:
+            pkgs.lib.mapAttrs (_: target:
+              lib.buildGestaltApplication (
+                (import (./examples + "/${example}")) // {
+                  inherit target;
+                }
+              )
+            ) lib.targets
         );
-        examples.counter.ir = self.lib."x86_64-linux".buildGestaltApplication (
-          (import ./examples/counter)
-          // {
-            target = self.lib."x86_64-linux".targets.ir;
-          }
-        );
-        examples.http.cli = self.lib."x86_64-linux".buildGestaltApplication (
-          (import ./examples/http)
-          // {
-            target = self.lib."x86_64-linux".targets.cli;
-          }
-        );
-        examples.practiceHelper.cli = self.lib."x86_64-linux".buildGestaltApplication (
-          (import ./examples/practiceHelper)
-          // {
-            target = self.lib."x86_64-linux".targets.cli;
-          }
-        );
-        examples.counter.web = self.lib."x86_64-linux".buildGestaltApplication (
-          (import ./examples/counter)
-          // {
-            target = self.lib."x86_64-linux".targets.web;
-          }
-        );
+        compatExample = import ./src/lib/upstreamNixCompatibilityWrapper.nix {
+          src = ./examples/minimal;
+          inherit nixpkgs pkgs;
+          gestaltSrc = self;
+          nix = nix.packages.${pkgs.system}.default;
+        };
       };
 
-
-    };
+    });
 }

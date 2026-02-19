@@ -29,7 +29,8 @@
               lower = lower;
               upper = upper;
             };
-          };
+          }
+          |> builtins.filter (part: part.start <= part.end);
 
         cartesianProduct =
           { start, end }:
@@ -64,15 +65,7 @@
         stateType = {
           _type = "struct";
           fields = {
-            done = {
-              _type = "jsonvalue";
-            };
-            task = {
-              _type = "jsonvalue";
-            };
-            practiceRange = {
-              _type = "jsonvalue";
-            };
+
           };
         };
 
@@ -89,10 +82,10 @@
                   done = [ ];
                   task = { };
                   practiceRange = {
-                    # start = params.start;
-                    # end = params.end;
-                    start = 3;
-                    end = 5;
+                    start = params.start;
+                    end = params.end;
+                    #start = 3;
+                    # end = 5;
                   };
                 };
                 effect = target.capabilities.effects.invokeAction {
@@ -100,17 +93,17 @@
                   params = { };
                 };
               };
-            # paramType = {
-            #   _type = "struct";
-            #   fields = {
-            #     start = {
-            #       _type = "int";
-            #     };
-            #     end = {
-            #       _type = "int";
-            #     };
-            #   };
-            # };
+            paramType = {
+              _type = "struct";
+              fields = {
+                start = {
+                  _type = "int";
+                };
+                end = {
+                  _type = "int";
+                };
+              };
+            };
           };
           handleRandomResult = {
             function =
@@ -120,11 +113,17 @@
               }:
               {
                 state = state // {
-                  done = state.done ++ [ params.result ];
+                  done = state.done ++ [
+                    (builtins.elemAt (possibleParts {
+                      lower = state.practiceRange.start;
+                      upper = state.practiceRange.end;
+                      done = state.done;
+                    }) params.result)
+                  ];
                   task = builtins.elemAt (possibleParts {
                     lower = state.practiceRange.start;
                     upper = state.practiceRange.end;
-                    done = state.done ++ [ params.result ];
+                    done = state.done;
                   }) params.result;
                 };
                 effect = target.capabilities.effects.noop;
@@ -144,12 +143,14 @@
               {
                 state = state;
                 effect = target.capabilities.effects.random {
-                  from = 1;
-                  to = builtins.length (possibleParts {
-                    lower = state.practiceRange.start;
-                    upper = state.practiceRange.end;
-                    done = state.done;
-                  });
+                  from = 0;
+                  to =
+                    (builtins.length (possibleParts {
+                      lower = state.practiceRange.start;
+                      upper = state.practiceRange.end;
+                      done = state.done;
+                    }))
+                    - 1;
                   callbackActionId = "handleRandomResult";
                 };
               };

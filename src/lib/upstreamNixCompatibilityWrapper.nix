@@ -1,55 +1,45 @@
 {
-  pkgs,
+  src,
   nix,
   nixpkgs,
-}:
-{
-  name,
-  version,
-  targetName,
-  src,
+  pkgs,
+  gestaltSrc
 }:
 
 let
-  flake = pkgs.writeTextDir "flake.nix" ''
-    {
-    inputs = {
-      nixpkgs.url = "path:${nixpkgs}";
-      gestalt.url = "path:${./../../.}";
 
-    };
-    outputs = {nixpkgs, self, gestalt, ...}@inputs: {
-      packages.default."${pkgs.system}" = gestalt.lib."${pkgs.system}".buildGestaltApplication {
-        name = "${name}";
-        version = "${version}";
-        target = gestalt.lib."${pkgs.system}".targets.${targetName};
-        modules = [
-          import ${./.}/default.nix;
-        ];
-    };
-    }
+  nestedFile = pkgs.writeText "nested.nix" ''
+    let
+      pkgs = import <nixpkgs> {};
+      lib = import ${gestaltSrc}/src/lib {inherit pkgs;};
+      appData = import "${src}/default.nix" ;
+    in
+    lib.buildGestaltApplication (appData // {
+      target = lib.targets.cli;
+    })
   '';
 
+  appData = import "${src}/default.nix";
 in
+
 pkgs.stdenv.mkDerivation {
-  pname = name;
-  inherit version src;
+  pname = "test";
+  version = "2";
 
-  buildInputs = [ flake ];
+  buildInputs = [
+    nix
+  ];
 
-  buildPhase = ''
-    echo $(${nix}/bin/nix build ${flake}\#default.${pkgs.system} --no-registries --no-update-lock-file --no-write-lock-file --extra-experimental-features 'flakes pipe-operators recursive-nix nix-command')
-    ls -lah
-    ls -lah result/
-    exit 1
-  '';
+  inherit null;
+  unpackPhase = "true";
   installPhase = ''
-    if [ -d "$(readlink -f result)" ]; then
-      mkdir -p $out
-      cp -r "$(readlink -f result)"/* "$out/"
-    else
-      cp "$(readlink -f result)" "$out"
-    fi
+    export NIX_PATH="nixpkgs=${nixpkgs}";
+    ${nix}/bin/nix-build ${nestedFile} --extra-experimental-features 'pipe-operators'
+    ls -lah
+
+    mkdir -p $out
+    cp -r ./result/* $out/
+    
   '';
 
   requiredSystemFeatures = [ "recursive-nix" ];

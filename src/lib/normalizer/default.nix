@@ -8,5 +8,5 @@ let
     }).config;
 in
 {
-  inherit (config) normalizeActions
+  inherit (config) normalizeActions;
 }
