@@ -21,9 +21,29 @@
           actions = ${lib.toJS (builtins.mapAttrs (name: action: action.function) actions)}
 
           const actionsParams = ${
-            lib.toJS (builtins.mapAttrs (_: action: action.paramType |> (t:
-              t.fields
-            )) actions)
+            lib.toJS (
+              builtins.mapAttrs (
+                _: action:
+                let
+                  paramType =
+                    if builtins.hasAttr "paramType" action && builtins.typeOf action.paramType == "set" then
+                      action.paramType
+                    else
+                      null;
+                  fields = if paramType != null && builtins.hasAttr "fields" paramType then paramType.fields else { };
+                  innerFields =
+                    if
+                      builtins.hasAttr "params" fields
+                      && builtins.typeOf fields.params == "set"
+                      && builtins.hasAttr "fields" fields.params
+                    then
+                      fields.params.fields
+                    else
+                      fields;
+                in
+                builtins.attrNames innerFields
+              ) actions
+            )
           };
 
           function invokeAction(actionName, params) {
@@ -138,9 +158,9 @@
           }
 
           function executeEffect(effect) {
-          console.log("Executing effect:", effect.id);
+            console.log("Executing effect:", effect.id);
             effectFunctions[effect.id](effect.params);
-          }value
+          }
 
           effectFunctions = {
             "noop": () => {

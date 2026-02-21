@@ -304,6 +304,21 @@ let
             text = "((e)=>e.length)";
             inherit reifiedFunctions;
           }
+        else if ast.value == "mul" then
+          {
+            text = "((a)=>(b)=>(a * b))";
+            inherit reifiedFunctions;
+          }
+        else if ast.value == "div" then
+          {
+            text = "((a)=>(b)=>(a / b))";
+            inherit reifiedFunctions;
+          }
+        else if ast.value == "hasAttr" then 
+          {
+            text = "((attr)=>(s)=>Object.prototype.hasOwnProperty(s, attr)";
+            inherit reifiedFunctions;
+          }
         else
           throw "unsupported primop ${ast.value} in ASTtoJS"
       else if ast._expr == "primopApp" then

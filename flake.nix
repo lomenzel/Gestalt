@@ -35,6 +35,12 @@
           practiceHelper = pkgs.gestaltPlatform.buildGestaltApplication {
             modules = [ ./examples/practiceHelper/default.nix ];
           };
+          counter = pkgs.gestaltPlatform.buildGestaltApplication {
+            modules = [ ./examples/counter/default.nix ];
+          };
+          mensa = pkgs.gestaltPlatform.buildGestaltApplication {
+            modules = [ ./examples/mensa/default.nix];
+          };
         }
       );
     };
