@@ -6,18 +6,17 @@ let
   # --- Helpers ---
   getAttrOr =
     attr: default: state:
-    if hasAttr attr state then state.${attr} else default;
+    state.${attr} or default;
 
-  hasAttr = attr: set: builtins.hasAttr attr set;
-  elem = x: list: builtins.elem x list;
-  elemAt = list: i: builtins.elemAt list i;
-  filter = f: list: builtins.filter f list;
-  concatStringsSep = sep: list: builtins.concatStringsSep sep list;
-  map = f: list: builtins.map f list;
-  genList = f: n: builtins.genList f n;
-  foldl' =
-    op: nul: list:
-    builtins.foldl' op nul list;
+  inherit (builtins)
+    elem
+    concatStringsSep
+    hasAttr
+    filter
+    elemAt
+    genList
+    foldl'
+    ;
 
   getView = getAttrOr "currentView" "meals";
   getCity = getAttrOr "city" defaultCity;
@@ -456,7 +455,7 @@ in
   # ================================================================
   view = [
     (state: {
-      actions = builtins.trace "Calculating actions view for state" (
+      actions = (
         if (getView state) == "meals" then
           mealsActions state
         else if (getView state) == "settings" then
@@ -469,7 +468,7 @@ in
           [ ]
       );
 
-      elements = builtins.trace "Calculating elements view for state" (
+      elements = (
         if (getView state) == "meals" then
           mealsElements state
         else if (getView state) == "settings" then

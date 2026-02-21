@@ -3,6 +3,7 @@
   modules = [
     ./buildGestaltApplication.nix
     ./targets/cli/default.nix
+    ./targets/web/default.nix
     {
       options.gestaltPlatform.buildGestaltApplication = pkgs.lib.mkOption {
         type = pkgs.lib.types.raw;

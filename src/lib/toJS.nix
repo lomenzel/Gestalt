@@ -74,7 +74,7 @@ let
       throw ast
     else
       let
-        evaluationResult = builtins.trace "Evaluating AST" config.lib.evaluateAST ast;
+        evaluationResult = config.lib.evaluateAST ast;
       in
       if evaluationResult.success then
         toJS' evaluationResult.value reifiedFunctions
@@ -299,6 +299,44 @@ let
             '';
             inherit reifiedFunctions;
           }
+        else if ast.value == "toJSON" then
+          {
+            text = ''
+              ((e)=>JSON.stringify(e))
+            '';
+            inherit reifiedFunctions;
+          }
+        else if ast.value == "concatStringsSep" then
+          {
+            text = ''
+              ((sep)=>(list)=>list.join(sep))
+            '';
+            inherit reifiedFunctions;
+          }
+        else if ast.value == "fromJSON" then
+          {
+            text = ''
+              ((s)=>JSON.parse(s))
+            '';
+            inherit reifiedFunctions;
+          }
+        else if ast.value == "head" then
+          {
+            text = ''
+              ((list)=>list[0])
+            '';
+            inherit reifiedFunctions;
+          }
+        else if ast.value == "trace" then
+          {
+            text = ''
+              ((msg)=>(val)=>{
+                console.log(msg, val);
+                return val;
+              })
+            '';
+            inherit reifiedFunctions;
+          }
         else if ast.value == "length" then
           {
             text = "((e)=>e.length)";
@@ -314,9 +352,9 @@ let
             text = "((a)=>(b)=>(a / b))";
             inherit reifiedFunctions;
           }
-        else if ast.value == "hasAttr" then 
+        else if ast.value == "hasAttr" then
           {
-            text = "((attr)=>(s)=>Object.prototype.hasOwnProperty(s, attr)";
+            text = "((attr)=>(s)=>Object.prototype.hasOwnProperty.call(s, attr))";
             inherit reifiedFunctions;
           }
         else
@@ -354,18 +392,29 @@ let
             inherit reifiedFunctions;
           }
       else if ast._expr == "select" then
-        {
-          text = ''
-            ((${(ASTtoJS ast.value.expression reifiedFunctions).text}).${
-              lib.concatStringsSep "." (
-                builtins.map (
-                  e: if e._expr == "attrName" then e.value else throw "dynamic select maybe? "
-                ) ast.value.path
-              )
-            })
-          '';
-          inherit reifiedFunctions;
-        }
+          let
+            exprJS = (ASTtoJS ast.value.expression reifiedFunctions).text;
+            pathJS = builtins.map (pathExpr: "[${(ASTtoJS pathExpr reifiedFunctions).text}]") ast.value.path;
+            defaultJS = if builtins.hasAttr "default" ast.value then (ASTtoJS ast.value.default reifiedFunctions).text else "(console.error('select failed and no default provided'))";
+          in
+          {
+            text = ''
+              ((()=>{
+                let result = undefined;
+                try {
+                  result =  ${exprJS}${lib.concatStringsSep "" pathJS};
+                } catch (e) {
+                  result = ${defaultJS};
+                }
+
+                if (result === undefined) {
+                  return ${defaultJS};
+                }
+                return result;
+              })())
+            '';
+            inherit reifiedFunctions;
+          }
       else if ast._expr == "update" then
         let
           baseJS = ASTtoJS ast.value.e1 reifiedFunctions;
@@ -398,6 +447,28 @@ let
           '';
           inherit reifiedFunctions;
         }
+      else if ast._expr == "and" then
+        let
+          left = ASTtoJS ast.value.e1 reifiedFunctions;
+          right = ASTtoJS ast.value.e2 reifiedFunctions;
+        in
+        {
+          text = ''
+            (${left.text} && ${right.text})
+          '';
+          inherit reifiedFunctions;
+        }
+      else if ast._expr == "or" then
+        let
+          left = ASTtoJS ast.value.e1 reifiedFunctions;
+          right = ASTtoJS ast.value.e2 reifiedFunctions;
+        in
+        {
+          text = ''
+            (${left.text} || ${right.text})
+          '';
+          inherit reifiedFunctions;
+        }
       else if ast._expr == "notEquals" then
         {
 
@@ -418,6 +489,6 @@ in
     let
       inherit (toJS' nixExpr { }) text reifiedFunctions;
     in
-    builtins.replaceStrings [ "\n" ] [ "" ] text;
+    builtins.replaceStrings [ ] [  ] text;
 
 }

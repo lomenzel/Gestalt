@@ -1,87 +1,95 @@
+{ target, config, ... }:
 {
-  modules = [
-    (
-      { target, config, ... }:
-      {
-        view = [(state: {
-          elements = if builtins.hasAttr "text" state then [{
-            content = state.text;
-            annotations = [];
-          }] else [
+  view = [
+    (state: {
+      elements =
+        if builtins.hasAttr "text" state then
+          [
             {
-              content = "No data fetched yet.";
-              annotations = [target.capabilities.annotations.ui.important];
+              content = state.text;
+              annotations = [ ];
+            }
+          ]
+        else
+          [
+            {
+              content = "no text in state :()";
+              annotations = [ target.capabilities.annotations.ui.important ];
             }
           ];
-          actions = [{
-            content = "Fetch Data";
-            annotations = [];
-            actionId = "fetch";
-          }];
-        })];
-
-
-
-        stateType = {
-          _type = "struct";
-          fields = {
-            text = {
-              _type = "string";
-            };
-          };
-        };
-
-        actions = {
-          fetch = {
-            function = {
-              state,
-              params,
-            }:{
-              state = state;
-              effect = target.capabilities.effects.httpRequest {
-                method = "GET";
-                url = params.url;
-                callBackActionId = "handleFetchResult";
-              };
-            };
-            paramType = {
-              _type = "struct";
-              fields = {
-                url = {
-                  _type = "string";
-                };
-              };
-            };
-          };
-          handleFetchResult = {
-            function = {
-              state,
-              params,
-            }:{
-              state = state // {
-                text = "Fetched data (status: ${params.status}): ${params.body}";
-              };
-              effect = target.capabilities.effects.noop;
-            };
-            paramType = {
-              _type = "struct";
-              fields = {
-                status = {
-                  _type = "int";
-                };
-                body = {
-                  _type = "string";
-                };
-                headers = {
-                  _type = "string";
-                };
-              };
-            };
-          };
-        };
-      }
-    )
+      actions = [
+        {
+          content = "Fetch Data";
+          annotations = [ ];
+          actionId = "fetch";
+        }
+      ];
+    })
   ];
+
+  stateType = {
+    _type = "struct";
+    fields = {
+      text = {
+        _type = "string";
+      };
+    };
+  };
+
+  actions = {
+    fetch = {
+      function =
+        {
+          state,
+          params,
+        }:
+        {
+          state = state;
+          effect = target.capabilities.effects.httpRequest {
+            method = "GET";
+            url = params.url;
+            callBackActionId = "handleFetchResult";
+          };
+        };
+      paramType = {
+        _type = "struct";
+        fields = {
+          url = {
+            _type = "string";
+          };
+        };
+      };
+    };
+    handleFetchResult = {
+      function =
+        {
+          state,
+          params,
+        }:
+        {
+          state = state // {
+            text = "Fetched data (status: ${params.status}): ${params.body}";
+          };
+          effect = target.capabilities.effects.log {
+            message = "Data fetched: ${builtins.toJSON (state // { text = "nö";})}";
+          };
+        };
+      paramType = {
+        _type = "struct";
+        fields = {
+          status = {
+            _type = "int";
+          };
+          body = {
+            _type = "string";
+          };
+          headers = {
+            _type = "string";
+          };
+        };
+      };
+    };
+  };
   title = "HTTP (Gestalt Example)";
   name = "example-http";
   version = "0.0.1";

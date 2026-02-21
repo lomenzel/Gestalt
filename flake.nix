@@ -41,6 +41,9 @@
           mensa = pkgs.gestaltPlatform.buildGestaltApplication {
             modules = [ ./examples/mensa/default.nix];
           };
+          http = pkgs.gestaltPlatform.buildGestaltApplication {
+            modules = [ ./examples/http/default.nix];
+           };
         }
       );
     };

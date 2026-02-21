@@ -59,9 +59,7 @@
 
       type = lib.types.attrs;
 
-      default = builtins.trace (builtins.toJSON config.initialState) (
-        lib.pipe config.initialState config.stateHooks
-      );
+      default = lib.pipe config.initialState config.stateHooks;
     };
 
     final.view = lib.mkOption {

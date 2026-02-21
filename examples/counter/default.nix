@@ -12,9 +12,9 @@ let
   abs = x: if x < 0 then 0 - x else x;
 
   #sum = x: if x > 0 then x + sum (x - 1) else if x < 0 then x + sum (x + 1) else 0; # test recursion
-  sum = x: (((abs x) * ((abs x) + 1)) / 2) * (signum x); # test helper functions
-  #sum = x: if x > 0 then add x (sum (x - 1)) else if x < 0 then add x (sum (x + 1)) else 0; # test currying currying
-  #add = x: y: x + y;
+  #sum = x: (((abs x) * ((abs x) + 1)) / 2) * (signum x); # test helper functions
+  sum = x: if x > 0 then add x (sum (x - 1)) else if x < 0 then add x (sum (x + 1)) else 0; # test currying currying
+  add = x: y: x + y;
 in
 {
   initialState = {
