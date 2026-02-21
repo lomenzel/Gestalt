@@ -22,6 +22,50 @@ let
           }
         ''
 
+      else if primop == "foldl'" then
+        ''
+          function ${name}(scope) {
+            const op = scope.__value;
+            return function(scope) {
+              let acc = scope.__value;
+              return function(scope) {
+                const list = scope.__value;
+                for (let i = 0; i < list.length; i++) {
+                  // Call the operator with the current accumulator
+                  const opWithAcc = op({ ...scope, __value: acc });
+                  // Then call the result with the current list item
+                  acc = opWithAcc({ ...scope, __value: list[i] });
+                }
+                return acc;
+              };
+            };
+          }
+        ''
+      else if primop == "typeOf" then
+        ''
+          function ${name}(scope) {
+            const e = scope.__value;
+
+            if (e === null) return "null";
+
+            const t = typeof e;
+
+                      
+            if (t === "boolean") return "bool";
+            if (t === "string") return "string";
+            if (t === "number") {
+              return Number.isInteger(e) ? "int" : "float";
+            }
+            if (t === "function") return "lambda";
+
+            if (Array.isArray(e)) return "list";
+
+            if (t === "object") return "set";
+
+            throw new Error("Unsupported type");
+          }
+        ''
+
       else if primop == "sub" then
         ''
           function ${name}(scope) {
@@ -70,7 +114,7 @@ let
             };
           }
         ''
-        else if primop == "concatMap" then
+      else if primop == "concatMap" then
         ''
           function ${name}(scope) {
             const func = scope.__value;
@@ -87,7 +131,7 @@ let
             };
           }
         ''
-          else if primop == "filter" then
+      else if primop == "filter" then
         ''
           function ${name}(scope) {
             const func = scope.__value;
@@ -103,7 +147,7 @@ let
             };
           }
         ''
-          else if primop == "elemAt" then
+      else if primop == "elemAt" then
 
         ''
           function ${name}(scope) {
@@ -114,65 +158,110 @@ let
           }
         ''
 
-          else if primop == "length" then
+      else if primop == "length" then
         ''
           function ${name}(scope) {
             return scope.__value.length;
           }
         ''
-          else
-            if primop == "all" then
-              ''
-                function ${name}(scope) {
-                  const func = scope.__value;
-                  return function(scope) {
-                    const list = scope.__value;
-                    for (let i = 0; i < list.length; i++) {
-                      if (!func({...scope, __value: list[i]})) {
-                        return false;
-                      }
-                    }
-                    return true;
-                  };
+      else if primop == "all" then
+        ''
+          function ${name}(scope) {
+            const func = scope.__value;
+            return function(scope) {
+              const list = scope.__value;
+              for (let i = 0; i < list.length; i++) {
+                if (!func({...scope, __value: list[i]})) {
+                  return false;
                 }
-              '' else
-          if primop == "elem" then
-            ''
-              function ${name}(scope) {
-                const item = scope.__value;
-                return function(scope) {
-                  return elem(item, scope.__value);
-                };
               }
-            ''
-          else if primop == "map" then
-            ''
-              function ${name}(scope) {
-                const func = scope.__value;
-                return function(scope) {
-                  const list = scope.__value;
-                  const result = [];
-                  for (let i = 0; i < list.length; i++) {
-                    result.push(func({...scope, __value: list[i]}));
-                  }
-                  return result;
-                };
+              return true;
+            };
+          }
+        ''
+      else if primop == "elem" then
+        ''
+          function ${name}(scope) {
+            const item = scope.__value;
+            return function(scope) {
+              return elem(item, scope.__value);
+            };
+          }
+        ''
+      else if primop == "hasAttr" then
+        ''
+          function ${name}(scope) {
+            const attr = scope.__value;
+            return function(scope) {
+              return Object.prototype.hasOwnProperty.call(scope.__value, attr);
+            };
+          }
+        ''
+      else if primop == "fromJSON" then
+        ''
+          function ${name}(scope) {
+            return JSON.parse(scope.__value);
+          }
+        ''
+      else if primop == "map" then
+        ''
+          function ${name}(scope) {
+            const func = scope.__value;
+            return function(scope) {
+              const list = scope.__value;
+              const result = [];
+              for (let i = 0; i < list.length; i++) {
+                result.push(func({...scope, __value: list[i]}));
               }
-            ''
-            else
+              return result;
+            };
+          }
+        ''
+      else if primop == "concatStringsSep" then
+        ''
+          function ${name}(scope) {
+            const sep = scope.__value;
+            return function(scope) {
+              return scope.__value.join(sep);
+            };
+          }
+        ''
+      else if primop == "head" then
+        ''
+          function ${name}(scope) {
+            return scope.__value[0];
+          }
+        ''
+      else if primop == "toJSON" then
+        ''
+          function ${name}(scope) {
+            return JSON.stringify(scope.__value);
+          }
+        ''
+      else if primop == "trace" then
+        ''
+          function ${name}(scope) {
+            const message = scope.__value;
+            return function(scope) {
+              console.log("[TRACE] " + message, scope.__value);
+              return scope.__value;
+            };
+          }
+        ''
+      else
         builtins.throw ("unsupported primop in JS conversion: " + primop)
 
     else
       let
         hasIdentifier = func.value ? arguments && func.value.arguments.identifier or null != null;
         identifierName = if hasIdentifier then func.value.arguments.identifier else null;
-        identifierExtraction = if hasIdentifier then
-          "scope = {...scope, ${identifierName}: scope.__value};\n          "
-        else "";
+        identifierExtraction =
+          if hasIdentifier then "scope = {...scope, ${identifierName}: scope.__value};\n          " else "";
       in
       ''
         function ${func.name}(scope) {
-          ${identifierExtraction}result =  ${exprToJS func.value.body}
+          ${identifierExtraction}
+          result =  ${exprToJS func.value.body}
           return result;
         }
       '';
@@ -238,7 +327,7 @@ let
           funcJS + pkgs.lib.concatStringsSep "" (builtins.map (arg: "(" + arg + ")") argsJS)
 
         else if expr._expr == "lambdaRef" then
-          "((_scope) =>{ return ${expr.value.name}( {...scope, ..._scope} )})"
+          "((_scope) =>{ return ${expr.value.name}( {..._scope, ...scope, __value: _scope.__value} )})"
         else if expr._expr == "if" then
           let
             condJS = exprToJS expr.value.condition;
@@ -252,7 +341,7 @@ let
             e1JS = exprToJS expr.value.e1;
             e2JS = exprToJS expr.value.e2;
           in
-          "(" + e1JS + " === " + e2JS + ")"
+          "(deepEqual(${e1JS}, ${e2JS}))"
 
         else if expr._expr == "not" then
           let
@@ -266,7 +355,12 @@ let
             e2JS = exprToJS expr.value.e2;
           in
           "([ ..." + e1JS + ", ..." + e2JS + " ])"
-
+        else if expr._expr == "and" then
+          let
+            e1JS = exprToJS expr.value.e1;
+            e2JS = exprToJS expr.value.e2;
+          in
+          "((" + e1JS + ") && (" + e2JS + "))"
         else
           builtins.throw (
             "unsupported special expression in JS conversion: "
@@ -275,6 +369,8 @@ let
             + builtins.toJSON expr
           )
 
+      else if builtins.typeOf expr == "bool" then
+        "(${builtins.toJSON expr})"
       else
         builtins.throw (
           "unsupported expression type in JS conversion: "
@@ -284,7 +380,7 @@ let
         )
     );
 
-    generalHelpers = builtins.readFile ./generalHelperJsFunctions.js;
+  generalHelpers = builtins.readFile ./generalHelperJsFunctions.js;
 
 in
 {

@@ -367,40 +367,60 @@ let
             }
 
           else if builtins.typeOf x == "set" && builtins.hasAttr "_expr" x && x._expr == "lambda" then
-            if builtins.all 
-            (f: f.value.f != x) 
-            (builtins.filter (e: builtins.typeOf e.value.f == "set") (pkgs.lib.attrsToList reifiedFunctions) )
+            if
+              builtins.all (f: f.value.f != x) (
+                builtins.filter (e: builtins.typeOf e.value.f == "set") (pkgs.lib.attrsToList reifiedFunctions)
+              )
             then
-            let
-              newFunctionId = findNewFunctionName reifiedFunctions;
-              recCall = (
-                toIR_ (
-                  reifiedFunctions // {
-                    ${newFunctionId} = {
-                      id = newFunctionId;
-                      f = x;
-                    };
-                  }
-              
-                ) x.value (name + "inside Lambda")
-              );
-            in
-            {
-              value =
+              let
+                newFunctionId = findNewFunctionName reifiedFunctions name;
+                recCall = (
+                  toIR_ (
+                    reifiedFunctions
+                    // {
+                      ${newFunctionId} = {
+                        id = newFunctionId;
+                        f = x;
+                      };
+                    }
 
-                {
-                  _expr = "lambda";
-                  value = {
-                    implementation = {
-                      value = recCall.value;
-                      _expr = "lambda";
+                  ) x.value (name + "inside Lambda")
+                );
+              in
+              {
+                value =
+
+                  {
+                    _expr = "lambda";
+                    value = {
+                      implementation = {
+                        value = recCall.value;
+                        _expr = "lambda";
+                      };
+                      id = newFunctionId;
                     };
-                    id = newFunctionId;
+                  };
+                inherit (recCall) reifiedFunctions;
+              }
+            else
+              let
+                # Find the existing entry in reifiedFunctions that matches 'x'
+                existingFunc =
+                  pkgs.lib.findFirst (f: f.value.f == x)
+                    (throw "Logic error: function found in check but not in findFirst")
+                    (builtins.filter (e: builtins.typeOf e.value.f == "set") (pkgs.lib.attrsToList reifiedFunctions));
+              in
+              {
+                # Pass the state through unchanged
+                inherit reifiedFunctions;
+                # Return a reference to the existing ID
+                value = {
+                  _expr = "lambdaRef";
+                  value = {
+                    name = existingFunc.value.id;
                   };
                 };
-              inherit (recCall) reifiedFunctions;
-            }
-            else throw "todo"
+              }
 
           else if builtins.typeOf x == "list" then
             let
@@ -430,13 +450,14 @@ let
             }
 
           else if builtins.typeOf x == "lambda" then
-            if builtins.all 
-            (f: !builtins.sameFunction f.value.f x) 
-            (builtins.filter (e: builtins.typeOf e.value.f == "lambda") (pkgs.lib.attrsToList reifiedFunctions) )
+            if
+              builtins.all (f: !builtins.sameFunction f.value.f x) (
+                builtins.filter (e: builtins.typeOf e.value.f == "lambda") (pkgs.lib.attrsToList reifiedFunctions)
+              )
             then
 
               let
-                newFunctionId = findNewFunctionName reifiedFunctions;
+                newFunctionId = findNewFunctionName reifiedFunctions name;
                 recCall = toIR_ (
                   reifiedFunctions
                   // {
@@ -487,7 +508,9 @@ let
     in
     if builtins.hasAttr attrName attrs then findNewAttrName attrs prefix (i + 1) else attrName;
 
-  findNewFunctionName = functions: findNewAttrName functions "f" 0;
+  findNewFunctionName = functions: name: findNewAttrName functions (sanitizeFunctionName name) 0;
+
+  sanitizeFunctionName = name: builtins.replaceStrings [ "." " " ] [ "_" "_"] name;
 
 in
 value: name: (toIR_ { } value name).value

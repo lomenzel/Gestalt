@@ -3,7 +3,8 @@
   normalizeActions =
     types: stateType: raw:
     let
-      functions =
+      functions =# builtins.trace "Normalizing actions with state type: ${builtins.toJSON stateType} and raw: ${builtins.toJSON raw}"
+       (
         lib.filterAttrs (_: f: f.function._expr == "lambda") raw
         |> lib.attrsToList
         |> builtins.map (e: {
@@ -26,7 +27,8 @@
           };
         })
         |> lib.listToAttrs
-        |> config.normalizeAllFunctions;
+        |> config.normalizeAllFunctions
+      );
     in
     {
       inherit functions;

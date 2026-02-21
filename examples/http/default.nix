@@ -3,9 +3,24 @@
     (
       { target, config, ... }:
       {
-        initialState = {
-          text = "Nothing fetched yet. try fetch action";
-        };
+        view = [(state: {
+          elements = if builtins.hasAttr "text" state then [{
+            content = state.text;
+            annotations = [];
+          }] else [
+            {
+              content = "No data fetched yet.";
+              annotations = [target.capabilities.annotations.ui.important];
+            }
+          ];
+          actions = [{
+            content = "Fetch Data";
+            annotations = [];
+            actionId = "fetch";
+          }];
+        })];
+
+
 
         stateType = {
           _type = "struct";

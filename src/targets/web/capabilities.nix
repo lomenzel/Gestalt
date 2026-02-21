@@ -111,22 +111,85 @@
     };
 
   };
-  uiHints = {
-    acitions = {
+  annotations = {
+    actions = {
       navigation = {
+        name = "navigation";
         description = ''
           Indicates that the action will cause a navigation to a different page or view.
-          will generate a keyboard shortcut for the action
+        '';
+        allowedParamTypes = [ ];
+      };
+      primary = {
+        name = "primary";
+        description = ''
+          Indicates that this action is a primary action in the UI.
+          Rendered with the accent color.
+        '';
+        allowedParamTypes = [ ];
+      };
+      danger = {
+        name = "danger";
+        description = ''
+          Indicates a destructive or irreversible action.
+          Rendered in red.
+        '';
+        allowedParamTypes = [ ];
+      };
+      success = {
+        name = "success";
+        description = ''
+          Indicates a positive or confirming action.
+          Rendered in green.
+        '';
+        allowedParamTypes = [ ];
+      };
+      outlined = {
+        name = "outlined";
+        description = ''
+          Renders the action button with an outlined style instead of filled.
         '';
         allowedParamTypes = [ ];
       };
     };
 
-    state = {
+    ui = {
       important = {
+        name = "important";
         description = ''
-          Indicates that this value is important
-          will display text in accent color
+          Indicates that this value is important.
+          Displayed with accent color and bold weight.
+        '';
+        allowedOnTypes = [
+          { _type = "string"; }
+        ];
+      };
+
+      muted = {
+        name = "muted";
+        description = ''
+          Secondary or less-important text.
+          Displayed in a dimmed color.
+        '';
+        allowedOnTypes = [
+          { _type = "string"; }
+        ];
+      };
+
+      code = {
+        name = "code";
+        description = ''
+          Displayed in a monospace font with a subtle background.
+        '';
+        allowedOnTypes = [
+          { _type = "string"; }
+        ];
+      };
+
+      heading = {
+        name = "heading";
+        description = ''
+          Displayed as a prominent heading.
         '';
         allowedOnTypes = [
           { _type = "string"; }
@@ -134,9 +197,10 @@
       };
 
       tooltip = {
+        name = "tooltip";
         description = ''
-          hidden by default
-          user can toggle tooltips globally
+          Hidden by default.
+          User can toggle tooltips globally.
         '';
         allowedOnTypes = [
           { _type = "string"; }

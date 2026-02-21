@@ -1,0 +1,258 @@
+/* ─── Gestalt Web Runtime ────────────────────────────────── */
+
+(function () {
+  'use strict';
+
+  var viewContainer = document.getElementById('viewContainer');
+  var paramModal = document.getElementById('paramModal');
+  var modalFieldsEl = document.getElementById('modalFields');
+  var modalSubmit = document.getElementById('modalSubmit');
+  var modalCancel = document.getElementById('modalCancel');
+  var modalTitle = document.getElementById('modalTitle');
+
+  /* ── Logging (console only) ──────────────────────────────── */
+
+  function log(msg) {
+    console.log('%c[Gestalt]%c ' + msg, 'color:#7c6aef;font-weight:700', 'color:inherit');
+  }
+
+  /* ── Action dispatch ─────────────────────────────────────── */
+
+  window.invokeAction = function invokeAction(actionName, params) {
+    var result;
+    try {
+      result = actions[actionName]({ state: state, params: params });
+    } catch (e) {
+      console.error('[Gestalt] Action error (' + actionName + '):', e);
+      return;
+    }
+    state = result.state;
+    log('Action: ' + actionName);
+    try {
+      executeEffect(result.effect);
+    } catch (e) {
+      console.error('[Gestalt] Effect error:', e);
+    }
+    renderView();
+  };
+
+  /* ── Effects ─────────────────────────────────────────────── */
+
+  function executeEffect(effect) {
+    if (!effect || !effect.id) return;
+    log('Effect: ' + effect.id);
+    var handler = effectFunctions[effect.id];
+    if (handler) handler(effect.params);
+  }
+
+  var effectFunctions = {
+    noop: function () {},
+
+    log: function (params) {
+      console.log('%c[App]%c ' + params.message, 'color:#30a46c;font-weight:700', 'color:inherit');
+    },
+
+    httpRequest: function (params) {
+      var opts =
+        params.method.toUpperCase() === 'GET'
+          ? undefined
+          : {
+              method: params.method,
+              body: params.body,
+              headers: params.headers || {},
+            };
+
+      fetch(params.url, opts)
+        .then(function (resp) {
+          return resp.text().then(function (body) {
+            return {
+              status: resp.status,
+              body: body,
+              headers: Object.fromEntries(resp.headers.entries()),
+            };
+          });
+        })
+        .then(function (data) {
+          window.invokeAction(params.callBackActionId, data);
+        })
+        .catch(function (e) {
+          console.error('[Gestalt] HTTP Error:', e.message);
+        });
+    },
+
+    random: function (params) {
+      var result =
+        Math.floor(Math.random() * (params.to - params.from + 1)) + params.from;
+      window.invokeAction(params.callbackActionId, { result: result });
+    },
+
+    invokeAction: function (params) {
+      window.invokeAction(params.actionId, params.params);
+    },
+  };
+
+  /* ── Annotation helper ───────────────────────────────────── */
+
+  function applyAnnotations(el, annotations) {
+    if (!annotations || !annotations.length) return;
+    annotations.forEach(function (a) {
+      if (typeof a === 'string') {
+        el.classList.add(a);
+      } else if (a && typeof a === 'object' && a.name) {
+        el.classList.add(a.name);
+      }
+    });
+  }
+
+  /* ── Modal ───────────────────────────────────────────────── */
+
+  function closeModal() {
+    paramModal.classList.remove('active');
+  }
+
+  modalCancel.addEventListener('click', closeModal);
+
+  paramModal.addEventListener('click', function (e) {
+    if (e.target === paramModal) closeModal();
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && paramModal.classList.contains('active')) {
+      closeModal();
+    }
+  });
+
+  function openParamModal(actionId, fields) {
+    modalTitle.textContent = actionId;
+    modalFieldsEl.innerHTML = '';
+
+    fields.forEach(function (f) {
+      var fieldDiv = document.createElement('div');
+      fieldDiv.className = 'modal-field';
+
+      var label = document.createElement('label');
+      label.textContent = f;
+
+      var input = document.createElement('input');
+      input.id = 'modal-field-' + f;
+      input.placeholder = f;
+
+      // Submit on Enter
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') modalSubmit.click();
+      });
+
+      fieldDiv.appendChild(label);
+      fieldDiv.appendChild(input);
+      modalFieldsEl.appendChild(fieldDiv);
+    });
+
+    paramModal.classList.add('active');
+
+    var firstInput = modalFieldsEl.querySelector('input');
+    if (firstInput) setTimeout(function () { firstInput.focus(); }, 60);
+
+    modalSubmit.onclick = function () {
+      var params = {};
+      fields.forEach(function (f) {
+        var v = document.getElementById('modal-field-' + f).value;
+        try {
+          params[f] = JSON.parse(v);
+        } catch (_) {
+          params[f] = v;
+        }
+      });
+      closeModal();
+      try {
+        window.invokeAction(actionId, params);
+      } catch (e) {
+        console.error('[Gestalt] Action invoke error:', e);
+      }
+    };
+  }
+
+  /* ── View rendering ──────────────────────────────────────── */
+
+  function renderView() {
+    var ui;
+    try {
+      ui = callView(state);
+    } catch (e) {
+      console.error('[Gestalt] View error:', e);
+      ui = { elements: [], actions: [] };
+    }
+
+    if (Array.isArray(ui)) ui = ui[0];
+
+    viewContainer.innerHTML = '';
+
+    /* Elements */
+    if (ui.elements && ui.elements.length) {
+      var elementsCard = document.createElement('div');
+      elementsCard.className = 'card';
+
+      ui.elements.forEach(function (el) {
+        var div = document.createElement('div');
+        div.className = 'view-element';
+        div.textContent = el.content;
+        applyAnnotations(div, el.annotations);
+        elementsCard.appendChild(div);
+      });
+
+      viewContainer.appendChild(elementsCard);
+    }
+
+    /* Actions */
+    if (ui.actions && ui.actions.length) {
+      var actionsCard = document.createElement('div');
+      actionsCard.className = 'card';
+
+      var label = document.createElement('div');
+      label.className = 'card-label';
+      label.textContent = 'Actions';
+      actionsCard.appendChild(label);
+
+      var grid = document.createElement('div');
+      grid.className = 'actions-grid';
+
+      ui.actions.forEach(function (a) {
+        var btn = document.createElement('button');
+        btn.className = 'action-btn';
+        btn.textContent = a.content;
+        applyAnnotations(btn, a.annotations);
+
+        btn.addEventListener('click', function () {
+          // If the view provided concrete params for this action, use them.
+          if (a && a.params !== undefined) {
+            try {
+              window.invokeAction(a.actionId, a.params);
+            } catch (e) {
+              console.error('[Gestalt] Action invoke error:', e);
+            }
+            return;
+          }
+
+          var fields = actionsParams[a.actionId] || [];
+          if (fields.length > 0) {
+            openParamModal(a.actionId, fields);
+          } else {
+            try {
+              window.invokeAction(a.actionId, {});
+            } catch (e) {
+              console.error('[Gestalt] Action invoke error:', e);
+            }
+          }
+        });
+
+        grid.appendChild(btn);
+      });
+
+      actionsCard.appendChild(grid);
+      viewContainer.appendChild(actionsCard);
+    }
+  }
+
+  /* ── Boot ─────────────────────────────────────────────────── */
+  log('Runtime loaded');
+  renderView();
+})();
