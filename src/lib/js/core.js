@@ -5,7 +5,7 @@ class GestaltCore {
     #view;
     #actionParams;
 
-    constructor({ initialState, actions, view, actionParams }) {
+    constructor({ initialState, actions, view, actionParams  }) {
         this.#initialState = structuredClone(initialState);
         this.#state = structuredClone(initialState);
         this.#actions = actions;
@@ -53,5 +53,6 @@ class GestaltCore {
     get state() {
         return this.#state;
     }
+
 
 }

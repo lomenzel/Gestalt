@@ -1,7 +1,7 @@
-import { core, actionParamTypes } from "./generated/core.js";
+import { core, actionParamTypes, meta } from "./generated/core.js";
 import https from "https";
 
-console.log("CLI application started.");
+console.log(`${meta.title} started!`);
 
 const stdin = process.stdin;
 stdin.setEncoding("utf8");
@@ -131,7 +131,7 @@ function executeEffect(effect) {
 }
 
 const effectFunctions = {
-  noop: () => {},
+  noop: () => { },
 
   log: (params) => {
     console.log("LOG EFFECT:", params.message);

@@ -27,15 +27,6 @@
     })
   ];
 
-  stateType = {
-    _type = "struct";
-    fields = {
-      text = {
-        _type = "string";
-      };
-    };
-  };
-
   actions = {
     fetch = {
       function =

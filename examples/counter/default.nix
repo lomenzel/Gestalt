@@ -55,15 +55,6 @@ in
     })
   ];
 
-  stateType = {
-    _type = "struct";
-    fields = {
-      counter = {
-        _type = "int";
-      };
-    };
-  };
-
   actions = {
     increment = {
       function =

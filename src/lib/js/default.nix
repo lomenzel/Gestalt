@@ -1,4 +1,9 @@
-{ lib, pkgs, config, ... }:
+{
+  lib,
+  pkgs,
+  config,
+  ...
+}:
 {
   imports = [
     ./toJS.nix
@@ -42,6 +47,14 @@
 
       export const core = new GestaltCore(${config.lib.toJS constructorParam});
       export const actionParamTypes = ${config.lib.toJS actionParams};
+      export const meta = ${config.lib.toJS {
+        inherit (ir)
+          name
+          title
+          version
+          author
+          ;
+      }}
     '';
 
 }

@@ -22,7 +22,6 @@
         title = config.title;
         version = config.version;
         initialState = config.final.initialState;
-        stateType = lib.warn "stateType not implemented yet, will probably be removed" config.stateType;
         actions = config.final.actions;
         view = config.final.view;
         author = config.author;

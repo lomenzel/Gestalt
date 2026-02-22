@@ -1,4 +1,7 @@
 { pkgs, ... }:
+let
+  inherit (pkgs) lib;
+in
 (pkgs.lib.evalModules {
   modules = [
     ./js/default.nix
@@ -7,9 +10,28 @@
     ./eval.nix
     ./ir.nix
     {
-      options.lib = pkgs.lib.mkOption {
-        type = pkgs.lib.types.attrsOf pkgs.lib.types.raw;
-        default = {};
+      options.lib = {
+        toCpp = lib.mkOption {
+          type = lib.types.raw;
+        };
+        toJS = lib.mkOption {
+          type = lib.types.raw;
+        };
+        evaluateAST = lib.mkOption {
+          type = lib.types.raw;
+        };
+        findNewAttrName = lib.mkOption {
+          type = lib.types.raw;
+        };
+        findNewFunctionName = lib.mkOption {
+          type = lib.types.raw;
+        };
+        gestaltCore = lib.mkOption {
+          type = lib.types.attrsOf lib.types.raw;
+        };
+        mkGestaltIR = lib.mkOption {
+          type = lib.types.raw;
+        };
       };
     }
   ];

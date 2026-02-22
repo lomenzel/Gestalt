@@ -8,7 +8,6 @@
     buildApplication =
       {
         initialState,
-        stateType,
         actions,
         view,
         name,

@@ -16,14 +16,6 @@ in
     ];
 
   options = {
-    stateType = lib.mkOption {
-      type = lib.types.attrs;
-      default = {
-        _type = "struct";
-        fields = { };
-      };
-      description = "The type of state representation to use.";
-    };
     initialState = lib.mkOption {
       type = lib.types.attrs;
       default = { };

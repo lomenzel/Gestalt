@@ -56,13 +56,6 @@ in
     practiceRange = "not_initialized. run init action to start";
   };
 
-  stateType = {
-    _type = "struct";
-    fields = {
-
-    };
-  };
-
   view = [
     (state: {
       elements = [
