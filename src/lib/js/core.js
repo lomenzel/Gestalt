@@ -41,7 +41,7 @@ class GestaltCore {
             }
         }
 
-        const { state, effect } = actionFn(this.#state, params);
+        const { state, effect } = actionFn({ state: this.#state, params });
         this.#state = structuredClone(state);
         return effect;
     }
