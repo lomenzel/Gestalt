@@ -792,7 +792,18 @@ in
         };
       paramType = {
         _type = "struct";
-        fields = { };
+        fields = { 
+          headers = {
+            _type = "struct";
+            fields = { };
+          };
+          body = {
+            _type = "string";
+          };
+          status = {
+            _type = "number";
+          };
+        };
       };
     };
 

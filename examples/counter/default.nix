@@ -25,7 +25,7 @@ in
     (state: {
       elements = [
         {
-          content = "Counter: " + state.counter;
+          content = "Counter: " + (builtins.toString state.counter);
           annotations = [ ];
         }
       ];

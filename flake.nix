@@ -44,12 +44,6 @@
           http = pkgs.gestaltPlatform.buildGestaltApplication {
             modules = [ ./examples/http/default.nix];
            };
-          cpp-example = pkgs.lib.gestaltCore.cpp (
-            pkgs.lib.mkGestaltIR {
-              modules = [ ./examples/counter/default.nix ];
-              target = pkgs.gestaltPlatform.targets.cli;
-            }
-          );
         }
       );
     };

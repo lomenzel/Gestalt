@@ -1,5 +1,7 @@
 #include "core.hpp"
 
+using Value = GestaltCore::Value;
+
 GestaltCore::GestaltCore()
   : state_(%initialState%),
     actions_(%actions%),
@@ -58,8 +60,10 @@ Value GestaltCore::dispatch(const std::string& actionName, const Value& params) 
   Value result;
   try {
     result = action(callArg);
+  } catch (const std::exception &e) {
+    throw std::runtime_error(std::string("action threw an exception: ") + e.what());
   } catch (...) {
-    throw std::runtime_error("action threw an exception");
+    throw std::runtime_error("action threw an unknown exception");
   }
 
   if (result.type != Value::Type::Set) throw std::runtime_error("action must return a set with at least 'state'");

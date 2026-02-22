@@ -1,5 +1,6 @@
 { config, lib, ... }:
 let
+  primopToCppName = p: "GestaltCore::gestalt_primop_${builtins.replaceStrings [ "'" ] [ "_" ] p}";
   toCpp' =
     nixExpr: reifiedFunctions:
     if
@@ -56,26 +57,24 @@ let
           Value::fromSet({
             ${builtins.concatStringsSep ",\n" (
               lib.mapAttrsToList (
-                name: value: "  { " + (toCpp' name reifiedFunctions).text + ", " + (toCpp' value reifiedFunctions).text + " }"
+                name: value: ''{ "${name}",  ${(toCpp' value reifiedFunctions).text}  }''
               ) nixExpr
             )}
           })
         '';
         inherit reifiedFunctions;
       }
-    
+
     else if builtins.typeOf nixExpr == "list" then
       {
         text = ''
           Value::fromList({
-            ${builtins.concatStringsSep ",\n" (
-              lib.map (elem: (toCpp' elem reifiedFunctions).text) nixExpr
-            )}
+            ${builtins.concatStringsSep ",\n" (lib.map (elem: (toCpp' elem reifiedFunctions).text) nixExpr)}
           })
         '';
         inherit reifiedFunctions;
       }
-      else
+    else
       builtins.throw "unsupported type ${builtins.typeOf nixExpr} in toCpp";
 
   ASTtoCpp =
@@ -119,9 +118,9 @@ let
           text =
             if hasName then
               ''
-                ([]() { 
-                  GestaltNixValue ${name};
-                  ${name} = GestaltNixValue::lambda([&](GestaltNixValue __gestalt_param) {
+                ([=]() { 
+                  Value ${name};
+                  ${name} = Value::lambda([=, &${name}](Value __gestalt_param) {
                     ${lambdaBody}
                   });
                   return ${name};
@@ -129,7 +128,7 @@ let
               ''
             else
               ''
-                GestaltNixValue::lambda([&](GestaltNixValue __gestalt_param) {
+                Value::lambda([=](Value __gestalt_param) {
                   ${lambdaBody}
                 })
               '';
@@ -137,35 +136,24 @@ let
         }
       else if ast._expr == "concatString/addition" then
         let
-          elements =
-            builtins.foldl'
-              (
-                acc: curr:
-                let
-                  recCall = ASTtoCpp curr acc.reifiedFunctions;
-                in
-                {
-                  value = acc.value ++ [ recCall.text ];
-                  inherit (recCall) reifiedFunctions;
-                }
-              )
-              {
-                value = [ ];
-                inherit reifiedFunctions;
-              }
-              ast.value;
-          parts = elements.value;
+          elements = builtins.map (
+            element:
+            let
+              recCall = ASTtoCpp element reifiedFunctions;
+            in
+            recCall.text
+          ) ast.value;
           folded =
-            if parts == [ ] then
-              "GestaltNixValue::fromInt(0)"
+            if elements == [ ] then
+              "Value::fromInt(0)"
             else
-              builtins.foldl' (acc: curr: "gestalt_add(${acc}, ${curr})") (builtins.head parts) (
-                builtins.tail parts
+              builtins.foldl' (acc: curr: "GestaltCore::gestalt_add(${acc}, ${curr})") (builtins.head elements) (
+                builtins.tail elements
               );
         in
         {
           text = folded;
-          inherit (elements) reifiedFunctions;
+          inherit reifiedFunctions;
         }
       else if ast._expr == "var" then
         {
@@ -187,52 +175,32 @@ let
           v = ASTtoCpp ast.value reifiedFunctions;
         in
         {
-          text = "GestaltNixValue::fromBool(!${v.text}.asBool())";
+          text = "Value::fromBool(!${v.text}.asBool())";
           inherit (v) reifiedFunctions;
         }
       else if ast._expr == "call" then
         let
           funcAst = ast.value.function;
           funcCpp = ASTtoCpp funcAst reifiedFunctions;
-          argsCpp =
-            builtins.foldl'
-              (
-                acc: curr:
-                let
-                  recCall = ASTtoCpp curr acc.reifiedFunctions;
-                in
-                {
-                  value = acc.value ++ [ recCall.text ];
-                  inherit (recCall) reifiedFunctions;
-                }
-              )
-              {
-                value = [ ];
-                inherit (funcCpp) reifiedFunctions;
-              }
-              ast.value.args;
-          argsList = argsCpp.value;
-          primopMap = {
-            "__sub" = "gestalt_sub";
-            "__lessThan" = "gestalt_lessThan";
-          };
-          isPrimop =
-            funcAst._expr == "var"
-            && builtins.hasAttr funcAst.value.name primopMap
-            && builtins.length argsList == 2;
-          primopText =
-            if isPrimop then
-              "${primopMap.${funcAst.value.name}}(${builtins.elemAt argsList 0}, ${builtins.elemAt argsList 1})"
-            else
-              null;
-          callText = builtins.foldl' (acc: curr: "(${acc}).call(${curr})") funcCpp.text argsList;
+          argsCpp = builtins.map (
+            arg:
+            let
+              recCall = ASTtoCpp arg reifiedFunctions;
+            in
+            recCall.text
+          ) ast.value.args;
+
+          callText = builtins.foldl' (acc: curr: "(${acc})(${curr})") funcCpp.text argsCpp;
         in
         {
-          text = if isPrimop then primopText else callText;
-          inherit (argsCpp) reifiedFunctions;
+          text = callText;
+          inherit reifiedFunctions;
         }
       else if ast._expr == "primop" then
-        throw "unsupported primop ${ast.value} in ASTtoCpp"
+        {
+          text = primopToCppName ast.value;
+          inherit reifiedFunctions;
+        }
       else if ast._expr == "primopApp" then
         let
           primopCpp = ASTtoCpp {
@@ -256,26 +224,117 @@ let
                 inherit (primopCpp) reifiedFunctions;
               }
               ast.value.appliedArgs;
-          callText = builtins.foldl' (acc: curr: "(${acc}).call(${curr})") primopCpp.text argsCpp.value;
+          callText = builtins.foldl' (acc: curr: "(${acc})(${curr})") primopCpp.text argsCpp.value;
         in
         {
           text = callText;
           inherit (argsCpp) reifiedFunctions;
         }
       else if ast._expr == "attrSet" then
-        if ast.value.recursive || ast.value.dynamicAttrs != [] then
+        if ast.value.recursive || ast.value.dynamicAttrs != [ ] then
           throw "recursive sets and sets with dynamic attributes not supported in ASTtoCpp"
         else
+          {
+            text = ''
+              Value::fromSet({
+                ${builtins.concatStringsSep ",\n" (
+                  lib.mapAttrsToList (
+                    name: value: ''{ "${name}", ${(ASTtoCpp value reifiedFunctions).text} }''
+                  ) ast.value.attrs
+                )}
+              })
+            '';
+            inherit reifiedFunctions;
+          }
+      else if ast._expr == "select" then
+        let
+          setCpp = ASTtoCpp ast.value.expression reifiedFunctions;
+          pathCpp = builtins.map (p: "[${(ASTtoCpp p reifiedFunctions).text}]") ast.value.path;
+          defaultCpp = ASTtoCpp ast.value.default reifiedFunctions;
+        in
+        {
+          text =
+            if builtins.hasAttr "default" ast.value then ''
+              ([=]() {
+                try {
+                  return ${setCpp.text}${builtins.concatStringsSep "" pathCpp};
+                } catch(...) {
+                  return ${defaultCpp.text};
+                }
+              }())
+            ''
+            else
+              ''
+                ${setCpp.text}${builtins.concatStringsSep "" pathCpp}
+              '';
+          inherit reifiedFunctions;
+        }
+      else if ast._expr == "update" then
+        let
+          baseCpp = ASTtoCpp ast.value.e1 reifiedFunctions;
+          updateCpp = ASTtoCpp ast.value.e2 reifiedFunctions;
+        in
+        {
+          text = "${baseCpp.text}.update(${updateCpp.text})";
+          inherit reifiedFunctions;
+        }
+      else if ast._expr == "concatLists" then
+        let
+          aCpp = ASTtoCpp ast.value.e1 reifiedFunctions;
+          bCpp = ASTtoCpp ast.value.e2 reifiedFunctions;
+        in
+        {
+          text = "${aCpp.text}.concat(${bCpp.text})";
+          inherit reifiedFunctions;
+        }
+      else if ast._expr == "list" then
+        let
+          elementsCpp = builtins.map (e: ASTtoCpp e reifiedFunctions) ast.value;
+        in
         {
           text = ''
-            Value::fromSet({
+            Value::fromList({
               ${builtins.concatStringsSep ",\n" (
-                lib.mapAttrsToList (
-                  name: value: "  { " + (toCpp' name reifiedFunctions).text + ", " + (toCpp' value reifiedFunctions).text + " }"
-                ) ast.value.attrs
+                lib.map (elem: (ASTtoCpp elem reifiedFunctions).text) ast.value
               )}
             })
           '';
+          inherit reifiedFunctions;
+        }
+      else if ast._expr == "equals" then
+        let
+          aCpp = ASTtoCpp ast.value.e1 reifiedFunctions;
+          bCpp = ASTtoCpp ast.value.e2 reifiedFunctions;
+        in
+        {
+          text = "Value::fromBool(${aCpp.text} == ${bCpp.text})";
+          inherit reifiedFunctions;
+        }
+      else if ast._expr == "notEquals" then
+        let
+          aCpp = ASTtoCpp ast.value.e1 reifiedFunctions;
+          bCpp = ASTtoCpp ast.value.e2 reifiedFunctions;
+        in
+        {
+          text = "Value::fromBool(!(${aCpp.text} == ${bCpp.text}))";
+          inherit reifiedFunctions;
+        }
+      else if ast._expr == "and" then
+        let
+          aCpp = ASTtoCpp ast.value.e1 reifiedFunctions;
+          bCpp = ASTtoCpp ast.value.e2 reifiedFunctions;
+        in
+        {
+          text = "Value::fromBool(${aCpp.text}.asBool() && ${bCpp.text}.asBool())";
+          inherit reifiedFunctions;
+        }
+      else if ast._expr == "or" then
+        let
+          aCpp = ASTtoCpp ast.value.e1 reifiedFunctions;
+          bCpp = ASTtoCpp ast.value.e2 reifiedFunctions;
+        in
+        {
+          text = "Value::fromBool(${aCpp.text}.asBool() || ${bCpp.text}.asBool())";
           inherit reifiedFunctions;
         }
       else

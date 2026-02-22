@@ -68,14 +68,16 @@
       src = null;
       dontUnpack = true;
 
+      buildInputs = [ pkgs.nlohmann_json];
+
       postPatch = ''
         cp ${header} core.hpp
         cp ${source} core.cpp
       '';
 
       buildPhase = ''
-        $CXX -O3 -c core.cpp -o core.o
-        $AR rcs libgestalt.a core.o
+        g++ -O3 -c core.cpp -o core.o
+        ar rcs libgestalt.a core.o
       '';
 
       installPhase = ''
@@ -83,5 +85,8 @@
         cp libgestalt.a $out/lib/
         cp core.hpp $out/include/
       '';
+      passthru = {
+        inherit header source;
+      };
     };
 }

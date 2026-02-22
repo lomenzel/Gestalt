@@ -4,6 +4,7 @@
     ./buildGestaltApplication.nix
     ./targets/cli/module.nix
     ./targets/web/default.nix
+    ./targets/tui/module.nix
     {
       options.gestaltPlatform.buildGestaltApplication = pkgs.lib.mkOption {
         type = pkgs.lib.types.raw;
