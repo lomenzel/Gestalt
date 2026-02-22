@@ -1,7 +1,7 @@
 { pkgs, ... }:
 (pkgs.lib.evalModules {
   modules = [
-    ./toJS.nix
+    ./js/default.nix
     ./findNew.nix
     ./eval.nix
     ./ir.nix
@@ -12,5 +12,9 @@
       };
     }
   ];
+  specialArgs = {
+    inherit (pkgs) lib;
+    inherit pkgs;
+  };
 
 }).config.lib

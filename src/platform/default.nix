@@ -2,7 +2,7 @@
 (pkgs.lib.evalModules {
   modules = [
     ./buildGestaltApplication.nix
-    ./targets/cli/default.nix
+    ./targets/cli/module.nix
     ./targets/web/default.nix
     {
       options.gestaltPlatform.buildGestaltApplication = pkgs.lib.mkOption {

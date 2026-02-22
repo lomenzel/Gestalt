@@ -172,189 +172,9 @@ let
           inherit reifiedFunctions;
         }
       else if ast._expr == "primop" then
-        if ast.value == "lessThan" then
+        if builtins.hasAttr ast.value primops then
           {
-            text = ''
-              ((a) => (b) => (a < b))
-            '';
-            inherit reifiedFunctions;
-          }
-        else if ast.value == "sub" then
-          {
-            text = ''
-              ((a) => (b) => (a - b))
-            '';
-            inherit reifiedFunctions;
-          }
-        else if ast.value == "elemAt" then
-          {
-            text = ''
-              ((list)=>(index)=>{
-                if (list.length < index)
-                  throw new Error("index out of bounds");
-                if (typeof index !== "number")
-                  throw new Error("index has to be a number");
-                return list.at(index);
-              })
-            '';
-            inherit reifiedFunctions;
-          }
-        else if ast.value == "filter" then
-          {
-            text = ''
-              ((func)=>(list)=>list.filter(func))
-            '';
-            inherit reifiedFunctions;
-          }
-        else if ast.value == "all" then
-          {
-            text = "((func)=>(list)=>list.every(func))";
-            inherit reifiedFunctions;
-          }
-        else if ast.value == "elem" then
-          {
-            text = ''
-              ((item)=>(list)=>{
-               return list.some((${jsEquals}(item)))
-              })
-            '';
-            inherit reifiedFunctions;
-          }
-        else if ast.value == "concatMap" then
-          {
-            text = ''
-              ((func)=>(list)=>{
-                const result = [];
-                for (let i = 0; i < list.length; i++) {
-                  const sublist = func(list[i]);
-                  for (let j = 0; j < sublist.length; j++) {
-                    result.push(sublist[j]);
-                  }
-                }
-                return result;
-              })
-            '';
-            inherit reifiedFunctions;
-          }
-        else if ast.value == "map" then
-          {
-            text = ''
-              ((func)=>(list)=>list.map(func))
-            '';
-            inherit reifiedFunctions;
-          }
-        else if ast.value == "genList" then
-          {
-            text = ''
-              ((func)=>(count)=>{
-              const result = [];
-              for (let i = 0; i < count; i++) {
-                result.push(func(i));
-              } 
-              return result; 
-              })
-            '';
-            inherit reifiedFunctions;
-          }
-        else if ast.value == "foldl'" then
-          {
-            text = ''
-              ((op)=>(acc)=>(list)=>list.reduce((acc, curr)=>op(acc)(curr), acc))
-            '';
-            inherit reifiedFunctions;
-          }
-        else if ast.value == "typeOf" then
-          {
-            text = ''
-              ((e)=>{
-                if (e === null) return "null";
-
-                const t = typeof e;
-
-                          
-                if (t === "boolean") return "bool";
-                if (t === "string") return "string";
-                if (t === "number") {
-                  return Number.isInteger(e) ? "int" : "float";
-                }
-                if (t === "function") return "lambda";
-
-                if (Array.isArray(e)) return "list";
-
-                if (t === "object") return "set";
-
-                throw new Error("Unsupported type " + t);  
-              })
-            '';
-            inherit reifiedFunctions;
-          }
-        else if ast.value == "toString" then
-          {
-            text = ''
-              ((e)=>{
-                if (e === null)
-                  return "";
-                return e.toString()
-              })
-            '';
-            inherit reifiedFunctions;
-          }
-        else if ast.value == "toJSON" then
-          {
-            text = ''
-              ((e)=>JSON.stringify(e))
-            '';
-            inherit reifiedFunctions;
-          }
-        else if ast.value == "concatStringsSep" then
-          {
-            text = ''
-              ((sep)=>(list)=>list.join(sep))
-            '';
-            inherit reifiedFunctions;
-          }
-        else if ast.value == "fromJSON" then
-          {
-            text = ''
-              ((s)=>JSON.parse(s))
-            '';
-            inherit reifiedFunctions;
-          }
-        else if ast.value == "head" then
-          {
-            text = ''
-              ((list)=>list[0])
-            '';
-            inherit reifiedFunctions;
-          }
-        else if ast.value == "trace" then
-          {
-            text = ''
-              ((msg)=>(val)=>{
-                console.log(msg, val);
-                return val;
-              })
-            '';
-            inherit reifiedFunctions;
-          }
-        else if ast.value == "length" then
-          {
-            text = "((e)=>e.length)";
-            inherit reifiedFunctions;
-          }
-        else if ast.value == "mul" then
-          {
-            text = "((a)=>(b)=>(a * b))";
-            inherit reifiedFunctions;
-          }
-        else if ast.value == "div" then
-          {
-            text = "((a)=>(b)=>(a / b))";
-            inherit reifiedFunctions;
-          }
-        else if ast.value == "hasAttr" then
-          {
-            text = "((attr)=>(s)=>Object.prototype.hasOwnProperty.call(s, attr))";
+            text = "(${primops.${ast.value}})";
             inherit reifiedFunctions;
           }
         else
@@ -392,29 +212,33 @@ let
             inherit reifiedFunctions;
           }
       else if ast._expr == "select" then
-          let
-            exprJS = (ASTtoJS ast.value.expression reifiedFunctions).text;
-            pathJS = builtins.map (pathExpr: "[${(ASTtoJS pathExpr reifiedFunctions).text}]") ast.value.path;
-            defaultJS = if builtins.hasAttr "default" ast.value then (ASTtoJS ast.value.default reifiedFunctions).text else "(console.error('select failed and no default provided'))";
-          in
-          {
-            text = ''
-              ((()=>{
-                let result = undefined;
-                try {
-                  result =  ${exprJS}${lib.concatStringsSep "" pathJS};
-                } catch (e) {
-                  result = ${defaultJS};
-                }
+        let
+          exprJS = (ASTtoJS ast.value.expression reifiedFunctions).text;
+          pathJS = builtins.map (pathExpr: "[${(ASTtoJS pathExpr reifiedFunctions).text}]") ast.value.path;
+          defaultJS =
+            if builtins.hasAttr "default" ast.value then
+              (ASTtoJS ast.value.default reifiedFunctions).text
+            else
+              "(console.error('select failed and no default provided'))";
+        in
+        {
+          text = ''
+            ((()=>{
+              let result = undefined;
+              try {
+                result =  ${exprJS}${lib.concatStringsSep "" pathJS};
+              } catch (e) {
+                result = ${defaultJS};
+              }
 
-                if (result === undefined) {
-                  return ${defaultJS};
-                }
-                return result;
-              })())
-            '';
-            inherit reifiedFunctions;
-          }
+              if (result === undefined) {
+                return ${defaultJS};
+              }
+              return result;
+            })())
+          '';
+          inherit reifiedFunctions;
+        }
       else if ast._expr == "update" then
         let
           baseJS = ASTtoJS ast.value.e1 reifiedFunctions;
@@ -481,14 +305,62 @@ let
 
       else
         throw "Unsupported AST node in ASTtoJS: ${ast._expr}";
-in
 
+  primops = {
+    sub = "a=>b=>(a - b)";
+    lessThan = "a=>b=>(a < b)";
+    elemAt = ''
+      list=>index=>{
+        if (list.length < index)
+          throw new Error("index out of bounds");
+        if (typeof index !== "number")
+          throw new Error("index has to be a number");
+        return list.at(index);
+      }
+    '';
+    filter = "func=>list=>list.filter(func)";
+    all = "func=>list=>list.every(func)";
+    elem = "item=>list=>list.some((${jsEquals}(item)))";
+    concatMap = "func=>list=>list.flatMap(func)";
+    map = "func=>list=>list.map(func)";
+    genList = "func=>count=>Array.from({ length: count }, (_, i) => func(i))";
+    foldl' = "op=>acc=>list=>list.reduce((acc, curr)=>op(acc)(curr), acc)";
+    typeOf = ''
+      e=>{
+        if (e === null) return "null";
+        const t = typeof e;
+        if (t === "boolean") return "bool";
+        if (t === "string") return "string";
+        if (t === "number")
+          return Number.isInteger(e) ? "int" : "float";
+        if (t === "function") return "lambda";
+        if (Array.isArray(e)) return "list";
+        if (t === "object") return "set";
+        throw new Error("Unsupported type " + t);  
+      }
+    '';
+    toString = "e=>(e === null ? '' : e.toString())";
+    toJSON = "e=>JSON.stringify(e)";
+    concatStringsSep = "sep=>list=>list.join(sep)";
+    fromJSON = "s=>JSON.parse(s)";
+    head = "list=>list[0]";
+    trace = ''
+      msg=>val=>{
+        console.log("[TRACE]" + msg, val);
+        return val;
+      }
+    '';
+    length = "e=>e.length";
+    mul = "a=>b=>(a * b)";
+    hasAttr = "attr=>s=>Object.prototype.hasOwnProperty.call(s, attr)";
+    div = "a=>b=>(a / b)";
+  };
+in
 {
   lib.toJS =
     nixExpr:
     let
       inherit (toJS' nixExpr { }) text reifiedFunctions;
     in
-    builtins.replaceStrings [ ] [  ] text;
-
+    text;
 }
