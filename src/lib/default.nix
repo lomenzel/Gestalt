@@ -2,6 +2,7 @@
 (pkgs.lib.evalModules {
   modules = [
     ./js/default.nix
+    ./cpp/default.nix
     ./findNew.nix
     ./eval.nix
     ./ir.nix

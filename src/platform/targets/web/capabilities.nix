@@ -144,13 +144,6 @@
         '';
         allowedParamTypes = [ ];
       };
-      outlined = {
-        name = "outlined";
-        description = ''
-          Renders the action button with an outlined style instead of filled.
-        '';
-        allowedParamTypes = [ ];
-      };
     };
 
     ui = {
@@ -190,17 +183,6 @@
         name = "heading";
         description = ''
           Displayed as a prominent heading.
-        '';
-        allowedOnTypes = [
-          { _type = "string"; }
-        ];
-      };
-
-      tooltip = {
-        name = "tooltip";
-        description = ''
-          Hidden by default.
-          User can toggle tooltips globally.
         '';
         allowedOnTypes = [
           { _type = "string"; }
