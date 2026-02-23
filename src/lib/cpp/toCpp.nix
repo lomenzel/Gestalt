@@ -95,20 +95,61 @@ let
           name = if hasName then ast.name else "";
           hasFormals = builtins.hasAttr "formals" ast.value.arguments;
           paramBinding =
-            if ast.value.arguments.identifier != null then
-              "Value ${ast.value.arguments.identifier} = __gestalt_param;"
-            else if hasFormals then
-              builtins.concatStringsSep "\n" (
-                lib.map (
-                  param:
-                  if builtins.hasAttr "defaultExpr" param then
-                    throw "default expressions not supported in lambda parameters in ASTtoCpp"
-                  else
-                    "Value ${param.name} = __gestalt_param[\"${param.name}\"];"
-                ) ast.value.arguments.formals
-              )
-            else
-              "";
+            (
+              if ast.value.arguments.identifier != null then
+                "Value ${ast.value.arguments.identifier} = __gestalt_param;\n"
+              else
+                ""
+            )
+            + (
+              if hasFormals then
+                builtins.concatStringsSep "\n" (
+                  lib.map (
+                    param:
+                    if builtins.hasAttr "defaultExpr" param then
+                      ''
+                        Value ${param.name};
+                        try {
+                          ${param.name} = __gestalt_param["${param.name}"];
+                        } catch(...) {
+                          ${param.name} = ${(ASTtoCpp param.defaultExpr reifiedFunctions).text};                    
+                        }
+                      ''
+                    else
+                      ''
+                        Value ${param.name} = __gestalt_param["${param.name}"];
+                      ''
+                  ) ast.value.arguments.formals
+                )
+                + "\n"
+                +
+                  # --- NEW: Strict parameter checking if ellipsis is false ---
+                  (
+                    if builtins.hasAttr "ellipsis" ast.value.arguments && ast.value.arguments.ellipsis == false then
+                      ''
+                        if (__gestalt_param.type == Value::Type::Set) {
+                          const auto& _param_map = std::get<Value::Set>(__gestalt_param.value);
+                          for (const auto& _kv : _param_map) {
+                            if (${
+                              if ast.value.arguments.formals == [ ] then
+                                "true"
+                              else
+                                builtins.concatStringsSep " && " (
+                                  builtins.map (f: "_kv.first != \"${f.name}\"") ast.value.arguments.formals
+                                )
+                            }) {
+                              throw std::runtime_error("GestaltCore::Value: Unexpected argument '" + _kv.first + "' passed to function");
+                            }
+                          }
+                        }
+                      ''
+                    else
+                      ""
+                  )
+              else
+                ""
+            );
+
           lambdaBody = ''
             ${paramBinding}
             return ${body.text};

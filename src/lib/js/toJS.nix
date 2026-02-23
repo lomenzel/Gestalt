@@ -1,6 +1,5 @@
 { config, lib, ... }:
 let
-
   jsEquals = builtins.readFile ./equals.js;
 
   toJS' =
@@ -93,9 +92,27 @@ let
                   ""
               }${
                 if builtins.hasAttr "formals" ast.value.arguments then
-                  lib.concatMapStringsSep "\n" (formal: ''
+                  (lib.concatMapStringsSep "\n" (formal: ''
                     const ${formal.name} = __gestalt_param.${formal.name};
-                  '') ast.value.arguments.formals
+                    if (${formal.name} === undefined) {
+                      throw new Error("GestaltCore::Value: Field '${formal.name}' not found");
+                    }
+                  '') ast.value.arguments.formals)
+                  + (
+                    if builtins.hasAttr "ellipsis" ast.value.arguments && ast.value.arguments.ellipsis == false then
+                      ''
+                        for (const _k of Object.keys(__gestalt_param)) {
+                          if (![${
+                            builtins.concatStringsSep ", " (builtins.map (f: ''"${f.name}"'') ast.value.arguments.formals)
+                          }].includes(_k)) {
+                            throw new Error("GestaltCore::Value: Unexpected argument '" + _k + "' passed to function");
+                          }
+                        }
+                      ''
+                    else
+                      ""
+                  )
+
                 else
                   ""
               }
@@ -216,23 +233,39 @@ let
           exprJS = (ASTtoJS ast.value.expression reifiedFunctions).text;
           pathJS = builtins.map (pathExpr: "[${(ASTtoJS pathExpr reifiedFunctions).text}]") ast.value.path;
           defaultJS =
-            if builtins.hasAttr "default" ast.value then
-              (ASTtoJS ast.value.default reifiedFunctions).text
-            else
-              "(console.error('select failed and no default provided'))";
+              (ASTtoJS ast.value.default reifiedFunctions).text;
+    
         in
         {
           text = ''
             ((()=>{
               let result = undefined;
               try {
-                result =  ${exprJS}${lib.concatStringsSep "" pathJS};
+                result = ${exprJS}${lib.concatStringsSep "" pathJS};
               } catch (e) {
-                result = ${defaultJS};
-              }
-
+                ${
+                  if builtins.hasAttr "default" ast.value then
+                    ''
+                      result = ${defaultJS};
+                    ''
+                  else
+                    ''
+                      throw e;
+                    ''
+                }
+                }
               if (result === undefined) {
-                return ${defaultJS};
+                ${ 
+                  if builtins.hasAttr "default" ast.value then
+                  "return ${defaultJS};"
+                  else ''
+                    throw new Error("GestaltCore::Value: Select failed: " + JSON.stringify({
+                      expression: ${exprJS},
+                      path: ${lib.concatStringsSep "" pathJS}
+                    }));
+                  ''
+                }
+
               }
               return result;
             })())
@@ -354,6 +387,19 @@ let
     mul = "a=>b=>(a * b)";
     hasAttr = "attr=>s=>Object.prototype.hasOwnProperty.call(s, attr)";
     div = "a=>b=>(a / b)";
+    any = "func=>list=>list.some(func)";
+    warn = ''msg=>val=>{
+      console.warn("[WARN]" + msg, val);
+      return val;
+    }'';
+    isPath = ''e=>{
+      console.warn("Paths are not supported in js target. assuming not path", e);
+      return false;
+    }'';
+    substring=''
+      start=>end=>str=>str.substring(start, end)
+    '';
+    stringLength = "str=>str.length";
   };
 in
 {

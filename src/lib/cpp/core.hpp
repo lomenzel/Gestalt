@@ -496,6 +496,77 @@ public:
     });
   }
 
+  static Value gestalt_primop_any(Value func) {
+    if (func.type != Value::Type::Lambda) {
+      throw std::runtime_error("gestalt_primop_any: expected a lambda function");
+    }
+    return Value::lambda([func](Value list) {
+      if (list.type != Value::Type::List) {
+        throw std::runtime_error("gestalt_primop_any: expected a list");
+      }
+      for (const auto& item : std::get<Value::List>(list.value)) {
+        if (func(item).isBool() && func(item).asBool()) {
+          return Value::fromBool(true);
+        }
+      }
+      return Value::fromBool(false);
+    });
+  }
+
+  static Value gestalt_primop_warn(Value msg) {
+    if (!msg.isString()) {
+      throw std::runtime_error("gestalt_primop_warn: expected a string message");
+    }
+    return Value::lambda([msg](Value x) {
+      std::cerr << "[WARN] " << msg.asString();
+      return x;
+    });
+  }
+
+  static Value gestalt_primop_isPath(Value p){
+    std::cerr << "[DEBUG] " << "paths not supported. isPath always returns false.";
+    return Value::fromBool(false); 
+  }
+
+static Value gestalt_primop_substring(Value start) {
+    if (!start.isInt()) {
+      throw std::runtime_error("gestalt_primop_substring: expected integer start index");
+    }
+    return Value::lambda([start](Value lenVal) {
+      if (!lenVal.isInt()) {
+        throw std::runtime_error("gestalt_primop_substring: expected integer length");
+      }
+      return Value::lambda([start, lenVal](Value str) {
+        if (!str.isString()) {
+          throw std::runtime_error("gestalt_primop_substring: expected a string");
+        }
+
+        const std::string& s = str.asString();
+        long long st = start.asInt();
+        long long len = lenVal.asInt();
+        long long s_size = static_cast<long long>(s.size());
+        if (st < 0) {
+            st = 0;
+        }
+        if (st >= s_size) {
+            return Value::fromString("");
+        }
+        size_t count = std::string::npos; 
+        if (len >= 0) {
+            count = static_cast<size_t>(len);
+        }
+        return Value::fromString(s.substr(static_cast<size_t>(st), count));
+      });
+    });
+  }
+
+  static Value gestalt_primop_stringLength(Value str) {
+    if (!str.isString()) {
+      throw std::runtime_error("gestalt_primop_stringLength: expected a string");
+    }
+    return Value::fromInt(static_cast<long long>(str.asString().size()));
+  }
+
   static Value gestalt_add(Value x, Value y) {
     if (x.isInt() && y.isInt()) {
       return Value::fromInt(x.asInt() + y.asInt());

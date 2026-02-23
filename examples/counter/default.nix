@@ -1,5 +1,11 @@
-{ target, config, ... }:
+{
+  target,
+  config,
+  lib,
+  ...
+}:
 let
+  hasPrefix = lib.hasPrefix;
 
   signum =
     x:
@@ -13,7 +19,14 @@ let
 
   #sum = x: if x > 0 then x + sum (x - 1) else if x < 0 then x + sum (x + 1) else 0; # test recursion
   #sum = x: (((abs x) * ((abs x) + 1)) / 2) * (signum x); # test helper functions
-  sum = x: if x > 0 then add x (sum (x - 1)) else if x < 0 then add x (sum (x + 1)) else 0; # test currying currying
+  sum =
+    x:
+    if x > 0 then
+      add x (sum (x - 1))
+    else if x < 0 then
+      add x (sum (x + 1))
+    else
+      0; # test currying currying
   add = x: y: x + y;
 in
 {
@@ -39,6 +52,32 @@ in
       description = "Sum up to 0 should be 0";
       params = 0;
       expected.toBe = 0;
+    }
+  ];
+
+  tests.e2e = [
+    {
+      description = "incrementing and decrementing should result in same counter value";
+      steps = [
+        {
+          actionId = "increment";
+        }
+        {
+          actionId = "decrement";
+        }
+      ];
+      pass =
+        {
+          state,
+          emittedEffects,
+          views,
+          ...
+        }:
+        state.counter == 0
+        && builtins.all (effect: effect == target.capabilities.effects.noop) emittedEffects
+        && builtins.all (
+          view: builtins.any (element: hasPrefix "Counter" element.content) view.elements
+        ) views;
     }
   ];
 
@@ -79,7 +118,7 @@ in
   actions = {
     increment = {
       function =
-        { state }:
+        { state, ... }:
         {
           state = state // {
             counter = state.counter + 1;
@@ -108,7 +147,7 @@ in
     };
     decrement = {
       function =
-        { state }:
+        { state, ... }:
         {
           state = state // {
             counter = state.counter - 1;
@@ -119,7 +158,7 @@ in
 
     sumUp = {
       function =
-        { state }:
+        { state, ... }:
         {
           state = state // {
             counter = sum state.counter;
@@ -130,7 +169,7 @@ in
 
     reset = {
       function =
-        { state }:
+        { state, ... }:
         {
           state = state // {
             counter = config.initialState.counter;

@@ -22,6 +22,9 @@ class GestaltCore {
 
     runUnitTests(tests) {
         const results = tests.map(({ description, func, params, pass }) => {
+            if (params === undefined) {
+                throw new Error(`Test "${description}" is missing 'params' field`);
+            }
             return {
                 description,
                 pass: pass(func(params)),

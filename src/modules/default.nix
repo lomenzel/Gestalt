@@ -34,7 +34,6 @@ in
     };
     tests.unit = lib.mkOption {
       type = lib.types.listOf (
-
         lib.types.submodule (
           { config, ... }:
           {
@@ -75,6 +74,44 @@ in
 
       );
       default = [ ];
+    };
+    tests.e2e = lib.mkOption {
+      type = lib.types.listOf (
+        lib.types.submodule {
+          options = {
+            description = lib.mkOption {
+              type = lib.types.str;
+              default = "unnamed end-to-end test";
+            };
+            steps = lib.mkOption {
+              type = lib.types.listOf (
+                lib.types.submodule ({config, ...}: {
+                  options = {
+                    actionId = lib.mkOption {
+                      type = lib.types.str;
+                    };
+                    params = lib.mkOption {
+                      type = lib.types.raw;
+                      default = null;
+                    };
+                    hasParam = lib.mkOption {
+                      type = lib.types.bool;
+                      default = config.params != null;
+                    };
+                  };
+                })
+              );
+            };
+            pass = lib.mkOption {
+              type = lib.types.raw;
+            };
+            initialState = lib.mkOption {
+              type = lib.types.raw;
+              default = config.final.initialState;
+            };
+          };
+        }
+      );
     };
     view = lib.mkOption {
       type = lib.types.listOf lib.types.raw;
