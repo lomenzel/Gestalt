@@ -112,6 +112,7 @@ in
           };
         }
       );
+      default = [];
     };
     view = lib.mkOption {
       type = lib.types.listOf lib.types.raw;
