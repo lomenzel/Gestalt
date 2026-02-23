@@ -59,11 +59,9 @@
         }:
         {
           state = state // {
-            text = "Fetched data (status: ${params.status}): ${params.body}";
+            text = "Fetched data (status: ${builtins.toString params.status}): ${params.body}";
           };
-          effect = target.capabilities.effects.log {
-            message = "Data fetched: ${builtins.toJSON (state // { text = "nö";})}";
-          };
+          effect = target.capabilities.effects.noop;
         };
       paramType = {
         _type = "struct";

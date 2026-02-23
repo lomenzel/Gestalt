@@ -38,9 +38,6 @@
           counter = pkgs.gestaltPlatform.buildGestaltApplication {
             modules = [ ./examples/counter/default.nix ];
           };
-          mensa = pkgs.gestaltPlatform.buildGestaltApplication {
-            modules = [ ./examples/mensa/default.nix];
-          };
           http = pkgs.gestaltPlatform.buildGestaltApplication {
             modules = [ ./examples/http/default.nix];
            };

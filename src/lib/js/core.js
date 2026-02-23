@@ -1,4 +1,3 @@
-import process from 'process';
 class GestaltCore {
     #state;
     #initialState;
@@ -43,7 +42,7 @@ class GestaltCore {
         console.log(`Unit Tests:\npassed: ${numberPassed},\nfailed: ${numberFailed}`);
 
         if (numberFailed > 0) {
-            process.exit(1);
+            throw new Error('Some unit tests failed');
         }
     }
 

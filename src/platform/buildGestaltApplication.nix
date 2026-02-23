@@ -3,7 +3,7 @@
   gestaltPlatform.buildGestaltApplication =
     {
       modules,
-      target ? config.gestaltPlatform.targets.cli,
+      target ? config.gestaltPlatform.targets.tui,
       extraTargets ? config.gestaltPlatform.targets,
     }:
     let
