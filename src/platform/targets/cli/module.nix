@@ -12,6 +12,7 @@
         author,
         version,
         title,
+        unitTests,
       }@ir:
       pkgs.callPackage ./default.nix { inherit ir; };
   };

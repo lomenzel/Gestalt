@@ -14,44 +14,9 @@
         author,
         version,
         title,
+        unitTests,
       }@ir:
       let
-        appJs = pkgs.writeText "app.js" ''
-          var state = ${lib.toJS initialState};
-
-          actions = ${lib.toJS (builtins.mapAttrs (name: action: action.function) actions)}
-
-
-          var actionsParams = ${
-            lib.toJS (
-              builtins.mapAttrs (
-                _: action:
-                let
-                  paramType =
-                    if builtins.hasAttr "paramType" action && builtins.typeOf action.paramType == "set" then
-                      action.paramType
-                    else
-                      null;
-                  fields = if paramType != null && builtins.hasAttr "fields" paramType then paramType.fields else { };
-                  innerFields =
-                    if
-                      builtins.hasAttr "params" fields
-                      && builtins.typeOf fields.params == "set"
-                      && builtins.hasAttr "fields" fields.params
-                    then
-                      fields.params.fields
-                    else
-                      fields;
-                in
-                builtins.attrNames innerFields
-              ) actions
-            )
-          };
-
-          function callView(s) {
-            return ${lib.toJS view}(s);
-          }
-        '';
 
         indexHTML = pkgs.writeText "index.html" ''
           <!DOCTYPE html>
@@ -82,18 +47,29 @@
               </div>
             </div>
 
-            <script src="app.js"></script>
+            <script src="lib/generated/core.js"></script>
             <script src="runtime.js"></script>
           </body>
           </html>
         '';
 
         webDir = pkgs.runCommand "${name}-web" { } ''
-          mkdir -p $out
+          mkdir -p $out/lib/generated
           cp ${indexHTML} $out/index.html
-          cp ${appJs} $out/app.js
           cp ${./styles.css} $out/styles.css
           cp ${./runtime.js} $out/runtime.js
+
+          # copy the ESM core produced by lib.gestaltCore.js and produce a
+          # browser-friendly variant that exposes globals on window
+          cp ${lib.gestaltCore.js ir} $out/lib/generated/core.esm.js
+          # TODO gestaltCore should probably produce a browser-friendly version :)
+          sed \
+            -e '/^import\s\+/d' \
+            -e "s/process.exit(1)/console.error(\"Cannot exit in browser\")/g" \
+            -e 's/^export const core = /window.core = /' \
+            -e 's/^export const actionParamTypes = /window.actionParamTypes = /' \
+            -e 's/^export const meta = /window.meta = /' \
+            $out/lib/generated/core.esm.js > $out/lib/generated/core.js
 
           cat > $out/server.py <<'PY'
           #!/usr/bin/env python3

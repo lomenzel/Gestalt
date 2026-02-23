@@ -39,6 +39,7 @@
             in
             builtins.attrNames innerFields
           ) ir.actions;
+          unitTests = ir.unitTests;
         }
         |> builtins.mapAttrs (_: v: config.lib.toCpp v);
       header = ./core.hpp;
@@ -51,6 +52,7 @@
               "%actions%"
               "%view%"
               "%actionParams%"
+              "%unitTests%"
               "%meta%"
             ]
             [
@@ -58,6 +60,7 @@
               constructorParam.actions
               constructorParam.view
               constructorParam.actionParams
+              constructorParam.unitTests
               constructorParam.meta
             ]
         |> pkgs.writeText "core.cpp";
@@ -79,6 +82,26 @@
         g++ -O3 -c core.cpp -o core.o
         ar rcs libgestalt.a core.o
       '';
+
+      checkPhase = ''
+        echo "Running unit tests..."
+
+        cat > unitTests.cpp <<'EOF'
+#include "core.hpp"
+#include <iostream>
+int main() {
+  GestaltCore core;
+  core.runUnitTests();
+  std::cout << "All tests passed!" << std::endl;
+  return 0;
+}
+EOF
+
+        g++ -O3 unitTests.cpp libgestalt.a -o unitTests
+        ./unitTests
+      '';
+
+      doCheck = true;
 
       installPhase = ''
         mkdir -p $out/include $out/lib

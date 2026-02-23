@@ -1,4 +1,4 @@
-{ stdenv, lib, nodejs, makeWrapper, ir }:
+{ stdenv, lib, nodejs, makeWrapper, ir, writeText }:
 stdenv.mkDerivation {
   pname = ir.name;
   inherit (ir) version;
@@ -15,6 +15,7 @@ stdenv.mkDerivation {
     makeWrapper ${nodejs}/bin/node $out/bin/${ir.name} \
       --add-flags "$out/lib/main.js"
   '';
+
   meta = {
     platforms = lib.platforms.unix;
   };

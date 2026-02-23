@@ -10,6 +10,8 @@
   var modalCancel = document.getElementById('modalCancel');
   var modalTitle = document.getElementById('modalTitle');
 
+  
+
   /* ── Logging (console only) ──────────────────────────────── */
 
   function log(msg) {
@@ -19,17 +21,16 @@
   /* ── Action dispatch ─────────────────────────────────────── */
 
   window.invokeAction = function invokeAction(actionName, params) {
-    var result;
+    var effect;
     try {
-      result = actions[actionName]({ state: state, params: params });
+      effect = window.core.dispatch(actionName, params);
     } catch (e) {
       console.error('[Gestalt] Action error (' + actionName + '):', e);
       return;
     }
-    state = result.state;
     log('Action: ' + actionName);
     try {
-      executeEffect(result.effect);
+      executeEffect(effect);
     } catch (e) {
       console.error('[Gestalt] Effect error:', e);
     }
@@ -176,7 +177,7 @@
   function renderView() {
     var ui;
     try {
-      ui = callView(state);
+      ui = window.core.view;
     } catch (e) {
       console.error('[Gestalt] View error:', e);
       ui = { elements: [], actions: [] };
@@ -232,7 +233,8 @@
             return;
           }
 
-          var fields = actionsParams[a.actionId] || [];
+          var fields = (window.actionParamTypes && window.actionParamTypes[a.actionId]) || [];
+
           if (fields.length > 0) {
             openParamModal(a.actionId, fields);
           } else {

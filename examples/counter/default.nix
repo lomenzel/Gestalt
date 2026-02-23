@@ -21,6 +21,27 @@ in
     counter = 0;
   };
 
+  tests.unit = [
+    {
+      func = sum;
+      description = "Sum up to 5 should be 15";
+      params = 5;
+      expected.toBe = 15;
+    }
+    {
+      func = sum;
+      description = "Sum up to -3 should be -6";
+      params = -3;
+      expected.toBe = -6;
+    }
+    {
+      func = sum;
+      description = "Sum up to 0 should be 0";
+      params = 0;
+      expected.toBe = 0;
+    }
+  ];
+
   view = [
     (state: {
       elements = [

@@ -16,6 +16,7 @@
     };
 
     gestaltIR = lib.mkOption {
+      readOnly = true;
       type = lib.types.attrsOf lib.types.raw;
       default = {
         name = config.name;
@@ -25,6 +26,10 @@
         actions = config.final.actions;
         view = config.final.view;
         author = config.author;
+        unitTests = builtins.map (test: {
+          inherit (test) description func params;
+          pass = test.expected.final;
+        }) config.tests.unit;
       };
       description = "The intermediate representation of the application.";
     };

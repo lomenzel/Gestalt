@@ -66,8 +66,26 @@ public:
       throw std::runtime_error("GestaltCore::Value: expected string");
     }
 
+    std::string typeName() const {
+      switch (type) {
+        case Type::Null: return "null";
+        case Type::Bool: return "bool";
+        case Type::Int: return "int";
+        case Type::Float: return "float";
+        case Type::String: return "string";
+        case Type::List: return "list";
+        case Type::Set: return "set";
+        case Type::Lambda: return "lambda";
+      }
+      throw std::runtime_error("gestalt_primop_typeOf: unknown type");
+    }
+
     Value call(Value arg) const {
-      if (type != Type::Lambda) throw std::runtime_error("GestaltCore::Value: expected lambda");
+      if (type != Type::Lambda) throw std::runtime_error("GestaltCore::Value: tried to call a " + typeName());
+      const Func& func = std::get<Func>(value);
+      if (!func) {
+          throw std::runtime_error("GestaltCore::Value: Fatal! Tried to call an empty/uninitialized Lambda.");
+      }
       return std::get<Func>(value)(std::move(arg));
     }
 
@@ -306,17 +324,7 @@ public:
   }
 
   static Value gestalt_primop_typeOf(Value x) {
-    switch (x.type) {
-      case Value::Type::Null: return Value::fromString("null");
-      case Value::Type::Bool: return Value::fromString("bool");
-      case Value::Type::Int: return Value::fromString("int");
-      case Value::Type::Float: return Value::fromString("float");
-      case Value::Type::String: return Value::fromString("string");
-      case Value::Type::List: return Value::fromString("list");
-      case Value::Type::Set: return Value::fromString("set");
-      case Value::Type::Lambda: return Value::fromString("lambda");
-    }
-    throw std::runtime_error("gestalt_primop_typeOf: unknown type");
+    return Value::fromString(x.typeName());
   }
 
   static Value gestalt_primop_length(Value x) {
@@ -504,6 +512,8 @@ public:
 
   void reset();
 
+  void runUnitTests();
+
   Value getState() const;
   Value viewState() const;
   Value getActionParams() const { return actionParams_; }
@@ -519,6 +529,7 @@ private:
   Value view_;
   Value initialState_;
   Value actionParams_;
+  Value unitTests_;
   Value meta_;
 
   size_t nextObserverId_ = 1;

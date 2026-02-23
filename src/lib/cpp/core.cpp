@@ -8,6 +8,7 @@ GestaltCore::GestaltCore()
     view_(%view%),
     initialState_(%initialState%),
     actionParams_(%actionParams%),
+    unitTests_(%unitTests%),
     meta_(%meta%)
 {}
 
@@ -106,4 +107,46 @@ void GestaltCore::unsubscribe(size_t id) {
 
 void GestaltCore::reset() {
   state_ = initialState_;
+}
+
+void GestaltCore::runUnitTests() {
+  Value tests = unitTests_;
+  if (tests.type != Value::Type::List) throw std::runtime_error("runUnitTests: expected a list of tests");
+
+  struct Result { std::string description; bool pass; };
+  std::vector<Result> results;
+
+  for (const Value t : std::get<Value::List>(tests.value)) {
+    if (t.type != Value::Type::Set) throw std::runtime_error("runUnitTests: each test must be a set/object");
+
+    std::string description = t["description"].asString();
+    Value func = t["func"];
+    Value params = t["params"];
+    Value pass = t["pass"];
+
+    bool passed = false;
+
+    if (func.type != Value::Type::Lambda) throw std::runtime_error("runUnitTests: 'func' must be a lambda");
+    Value funcResult = func(params);
+    if (pass.type != Value::Type::Lambda) throw std::runtime_error("runUnitTests: 'pass' must be a lambda");
+    Value passResult = pass(funcResult);
+    if (!passResult.isBool()) throw std::runtime_error("runUnitTests: 'pass' must return a boolean");
+    passed = passResult.asBool();
+
+
+    results.push_back({description, passed});
+  }
+
+  size_t numberPassed = 0;
+  for (const auto &r : results) if (r.pass) ++numberPassed;
+  size_t numberFailed = results.size() - numberPassed;
+
+  if (numberFailed > 0) {
+    std::cout << "Failed Tests:" << std::endl;
+    for (const auto &r : results) if (!r.pass) std::cout << "- " << r.description << std::endl;
+  }
+
+  std::cout << "Unit Tests:\npassed: " << numberPassed << ",\nfailed: " << numberFailed << std::endl;
+
+  if (numberFailed > 0) std::exit(1);
 }

@@ -11,9 +11,9 @@ let
       (x: f: f x);
 in
 {
-    imports = [
-      ./ir.nix
-    ];
+  imports = [
+    ./ir.nix
+  ];
 
   options = {
     initialState = lib.mkOption {
@@ -30,6 +30,50 @@ in
     };
     stateHooks = lib.mkOption {
       type = lib.types.listOf lib.types.raw;
+      default = [ ];
+    };
+    tests.unit = lib.mkOption {
+      type = lib.types.listOf (
+
+        lib.types.submodule (
+          { config, ... }:
+          {
+            options = {
+              func = lib.mkOption {
+                type = lib.types.raw;
+              };
+              description = lib.mkOption {
+                type = lib.types.str;
+                default = "Unnamed unit test";
+              };
+              expected.toBe = lib.mkOption {
+                type = lib.types.raw;
+                default = null;
+              };
+              expected.toPass = lib.mkOption {
+                type = lib.types.raw;
+                default = null;
+              };
+              params = lib.mkOption {
+                type = lib.types.raw;
+                default = [ ];
+              };
+              expected.final = lib.mkOption {
+                type = lib.types.raw;
+                readOnly = true;
+                default =
+                  if (config.expected.toBe == null) == (config.expected.toPass == null) then
+                    throw "You must specify either expected.toBe or expected.toPass, but not both."
+                  else if config.expected.toBe != null then
+                    (x: x == config.expected.toBe)
+                  else
+                    config.expected.toPass;
+              };
+            };
+          }
+        )
+
+      );
       default = [ ];
     };
     view = lib.mkOption {

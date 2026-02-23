@@ -1,3 +1,4 @@
+import process from 'process';
 class GestaltCore {
     #state;
     #initialState;
@@ -5,7 +6,7 @@ class GestaltCore {
     #view;
     #actionParams;
 
-    constructor({ initialState, actions, view, actionParams  }) {
+    constructor({ initialState, actions, view, actionParams }) {
         this.#initialState = structuredClone(initialState);
         this.#state = structuredClone(initialState);
         this.#actions = actions;
@@ -15,6 +16,32 @@ class GestaltCore {
 
     reset() {
         this.#state = structuredClone(this.#initialState);
+    }
+
+
+
+    runUnitTests(tests) {
+        const results = tests.map(({ description, func, params, pass }) => {
+            return {
+                description,
+                pass: pass(func(params)),
+            }
+        })
+        const numberPassed = results.filter(result => result.pass).length;
+        const numberFailed = results.length - numberPassed;
+
+        if (numberFailed > 0) {
+            console.log('Failed Tests:');
+            results.filter(result => !result.pass).forEach(result => {
+                console.log(`- ${result.description}`);
+            });
+        }
+
+        console.log(`Unit Tests:\npassed: ${numberPassed},\nfailed: ${numberFailed}`);
+
+        if (numberFailed > 0) {
+            process.exit(1);
+        }
     }
 
     dispatch(action, params = {}) {

@@ -119,11 +119,15 @@ let
             if hasName then
               ''
                 ([=]() { 
-                  Value ${name};
-                  ${name} = Value::lambda([=, &${name}](Value __gestalt_param) {
+                  auto _rec_func = [=](auto _self, Value __gestalt_param) -> Value {
+                    Value ${name} = Value::lambda([_self](Value __inner_param) {
+                      return _self(_self, __inner_param);
+                    });
                     ${lambdaBody}
+                  };
+                  return Value::lambda([=, _rec_func](Value __gestalt_param) {
+                    return _rec_func(_rec_func, __gestalt_param);
                   });
-                  return ${name};
                 }())
               ''
             else
@@ -254,15 +258,16 @@ let
         in
         {
           text =
-            if builtins.hasAttr "default" ast.value then ''
-              ([=]() {
-                try {
-                  return ${setCpp.text}${builtins.concatStringsSep "" pathCpp};
-                } catch(...) {
-                  return ${defaultCpp.text};
-                }
-              }())
-            ''
+            if builtins.hasAttr "default" ast.value then
+              ''
+                ([=]() {
+                  try {
+                    return ${setCpp.text}${builtins.concatStringsSep "" pathCpp};
+                  } catch(...) {
+                    return ${defaultCpp.text};
+                  }
+                }())
+              ''
             else
               ''
                 ${setCpp.text}${builtins.concatStringsSep "" pathCpp}
