@@ -34,6 +34,8 @@
         {
           practiceHelper = pkgs.gestaltPlatform.buildGestaltApplication {
             modules = [ ./examples/practiceHelper/default.nix ];
+            target = pkgs.gestaltPlatform.targets.web;
+            extraTargets = pkgs.gestaltPlatform.targets;
           };
           counter = pkgs.gestaltPlatform.buildGestaltApplication {
             modules = [ ./examples/counter/default.nix ];

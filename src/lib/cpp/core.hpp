@@ -567,6 +567,32 @@ static Value gestalt_primop_substring(Value start) {
     return Value::fromInt(static_cast<long long>(str.asString().size()));
   }
 
+  static Value gestalt_primop_mul(Value x) {
+    return Value::lambda([x](Value y) {
+      if (x.isInt() && y.isInt()) {
+        return Value::fromInt(x.asInt() * y.asInt());
+      } else if (x.isNumber() && y.isNumber()) {
+        return Value::fromFloat(x.asFloat() * y.asFloat());
+      } else {
+        throw std::runtime_error("gestalt_primop_mul: both arguments must be numbers");
+      }
+    });
+  }
+
+  static Value gestalt_primop_div(Value x) {
+    return Value::lambda([x](Value y) {
+      if (x.isInt() && y.isInt()) {
+        if (y.asInt() == 0) throw std::runtime_error("gestalt_primop_div: division by zero");
+        return Value::fromInt(x.asInt() / y.asInt());
+      } else if (x.isNumber() && y.isNumber()) {
+        if (y.asFloat() == 0.0) throw std::runtime_error("gestalt_primop_div: division by zero");
+        return Value::fromFloat(x.asFloat() / y.asFloat());
+      } else {
+        throw std::runtime_error("gestalt_primop_div: both arguments must be numbers");
+      }
+    });
+  }
+
   static Value gestalt_add(Value x, Value y) {
     if (x.isInt() && y.isInt()) {
       return Value::fromInt(x.asInt() + y.asInt());

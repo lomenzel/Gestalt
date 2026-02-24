@@ -52,7 +52,7 @@ in
 {
   initialState = {
     done = "not_initialized. run init action to start";
-    task = "not_initialized. run init action to start";
+    task = "No Practice Session initialized. Please start a new session.";
     practiceRange = "not_initialized. run init action to start";
   };
 
@@ -94,13 +94,14 @@ in
       // {
         message =
           if builtins.typeOf state.task == "string" then
-            "Please start a new practice session. (init action)"
+            state.task
           else
-            "Practice part "
-            + (builtins.toString state.task.start)
-            + " to "
-            + (builtins.toString state.task.end)
-            + ".";
+            "Practice Part: ${
+              if state.task.start == state.task.end then
+                builtins.toString state.task.start
+              else
+                "from ${builtins.toString state.task.start} to ${builtins.toString state.task.end}"
+            }";
       }
 
     )
@@ -121,8 +122,6 @@ in
             practiceRange = {
               start = params.start;
               end = params.end;
-              #start = 3;
-              # end = 5;
             };
           };
           effect = target.capabilities.effects.invokeAction {
@@ -176,21 +175,36 @@ in
       function =
         {
           state,
+          ...
         }:
-        {
-          state = state;
-          effect = target.capabilities.effects.random {
-            from = 0;
-            to =
-              (builtins.length (possibleParts {
-                lower = state.practiceRange.start;
-                upper = state.practiceRange.end;
-                done = state.done;
-              }))
-              - 1;
-            callbackActionId = "handleRandomResult";
+        if
+          (builtins.length (possibleParts {
+            lower = state.practiceRange.start;
+            upper = state.practiceRange.end;
+            done = state.done;
+          })) == 0
+        then
+          {
+            state = state // {
+              task = "All done! Please start a new Session.";
+            };
+            effect = target.capabilities.effects.noop;
+          }
+        else
+          {
+            state = state;
+            effect = target.capabilities.effects.random {
+              from = 0;
+              to =
+                (builtins.length (possibleParts {
+                  lower = state.practiceRange.start;
+                  upper = state.practiceRange.end;
+                  done = state.done;
+                }))
+                - 1;
+              callbackActionId = "handleRandomResult";
+            };
           };
-        };
       paramType = {
         _type = "struct";
         fields = {
@@ -198,11 +212,10 @@ in
       };
     };
 
-
   };
 
-    title = "Practice Helper (Gestalt Example)";
-    name = "practice-helper";
-    version = "0.0.1";
-    author.name = "Leonard Menzel";
+  title = "Practice Helper (Gestalt Example)";
+  name = "practice-helper";
+  version = "0.0.1";
+  author.name = "Leonard Menzel";
 }

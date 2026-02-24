@@ -5,7 +5,6 @@
   ...
 }:
 let
-  hasPrefix = lib.hasPrefix;
 
   signum =
     x:
@@ -18,8 +17,8 @@ let
   abs = x: if x < 0 then 0 - x else x;
 
   #sum = x: if x > 0 then x + sum (x - 1) else if x < 0 then x + sum (x + 1) else 0; # test recursion
-  #sum = x: (((abs x) * ((abs x) + 1)) / 2) * (signum x); # test helper functions
-  sum =
+  sum = x: (((abs x) * ((abs x) + 1)) / 2) * (signum x); # test helper functions
+  sum_ =
     x:
     if x > 0 then
       add x (sum (x - 1))
@@ -76,7 +75,7 @@ in
         state.counter == 0
         && builtins.all (effect: effect == target.capabilities.effects.noop) emittedEffects
         && builtins.all (
-          view: builtins.any (element: hasPrefix "Counter" element.content) view.elements
+          view: builtins.any (element: lib.hasPrefix "Counter" element.content) view.elements
         ) views;
     }
   ];
