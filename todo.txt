@@ -1,4 +1,0 @@
-inherit (something) something
-crashes reify
-
-higher order functions crash js target

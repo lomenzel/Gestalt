@@ -1,12 +1,14 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixFork.url = "github:lomenzel/nix";
   };
 
   outputs =
     {
       self,
       nixpkgs,
+      ...
     }@inputs:
     {
       overlays.default = final: prev: {
@@ -18,6 +20,7 @@
         gestaltPlatform = (
           import ./src/platform {
             pkgs = final;
+            inherit inputs;
           }
         );
       };
@@ -33,16 +36,17 @@
         in
         {
           practiceHelper = pkgs.gestaltPlatform.buildGestaltApplication {
-            modules = [ ./examples/practiceHelper/default.nix ];
+            src = ./examples/practiceHelper;
             target = pkgs.gestaltPlatform.targets.web;
             extraTargets = pkgs.gestaltPlatform.targets;
           };
           counter = pkgs.gestaltPlatform.buildGestaltApplication {
-            modules = [ ./examples/counter/default.nix ];
+            src = ./examples/counter;
           };
           http = pkgs.gestaltPlatform.buildGestaltApplication {
-            modules = [ ./examples/http/default.nix];
+            src = ./examples/http;
            };
+
         }
       );
     };

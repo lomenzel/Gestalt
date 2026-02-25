@@ -4,6 +4,8 @@
   gestaltPlatform.targets.web = {
 
     capabilities = import ./capabilities.nix;
+    # backreference to use in upstream compat mode
+    name = "web";
 
     buildApplication =
       {
@@ -53,7 +55,7 @@
           </html>
         '';
 
-        webDir = pkgs.runCommand "${name}-web" { } ''
+        public = pkgs.runCommand "${name}-public-assets" { } ''
           mkdir -p $out/lib/generated
           cp ${indexHTML} $out/index.html
           cp ${./styles.css} $out/styles.css
@@ -71,37 +73,40 @@
             -e 's/^export const meta = /window.meta = /' \
             $out/lib/generated/core.esm.js > $out/lib/generated/core.js
 
-          cat > $out/server.py <<'PY'
-          #!/usr/bin/env python3
-          from http.server import SimpleHTTPRequestHandler, HTTPServer
-          import sys
-
-          class CORSRequestHandler(SimpleHTTPRequestHandler):
-              def end_headers(self):
-                  self.send_header('Access-Control-Allow-Origin', '*')
-                  self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE')
-                  self.send_header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
-                  SimpleHTTPRequestHandler.end_headers(self)
-
-              def do_OPTIONS(self):
-                  self.send_response(200, "OK")
-                  self.send_header('Content-Length', '0')
-                  self.end_headers()
-
-          if __name__ == '__main__':
-              port = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
-              server = HTTPServer(('0.0.0.0', port), CORSRequestHandler)
-              print(f"Serving on port {port}")
-              server.serve_forever()
-          PY
-
-          chmod +x $out/server.py
+          rm $out/lib/generated/core.esm.js
         '';
       in
-      pkgs.writeShellScriptBin name ''
-        echo "Serving ${title} at http://localhost:8080"
-        cd ${webDir}
-        ${pkgs.python3}/bin/python3 server.py 8080
+      pkgs.runCommand "${name}-web" { } ''
+        mkdir -p $out/public
+        cp -r ${public}/* $out/public/
+
+        mkdir -p $out/bin
+        cp ${pkgs.writeShellScript "${name}-server" ''
+          cd ${public}
+          echo "Starting server for ${name} on port 8080..."
+          ${pkgs.lib.getExe pkgs.python3} ${pkgs.writeText "server.py" ''
+            from http.server import SimpleHTTPRequestHandler, HTTPServer
+            import sys
+
+            class CORSRequestHandler(SimpleHTTPRequestHandler):
+                def end_headers(self):
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE')
+                    self.send_header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
+                    SimpleHTTPRequestHandler.end_headers(self)
+
+                def do_OPTIONS(self):
+                    self.send_response(200, "OK")
+                    self.send_header('Content-Length', '0')
+                    self.end_headers()
+
+            if __name__ == '__main__':
+                port = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
+                server = HTTPServer(('0.0.0.0', port), CORSRequestHandler)
+                print(f"Serving on port {port}")
+                server.serve_forever()
+          ''} 8080
+        ''} $out/bin/${name}
       '';
 
   };

@@ -2,6 +2,9 @@
 {
   gestaltPlatform.targets.cli = {
 
+    # backreference to use in upstream compat mode
+    name = "cli";
+
     capabilities = import ./capabilities.nix;
     buildApplication =
       {

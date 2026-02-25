@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 (pkgs.lib.evalModules {
   modules = [
     ./buildGestaltApplication.nix
@@ -18,5 +18,6 @@
   specialArgs = {
     inherit (pkgs) lib;
     inherit pkgs;
+    inherit inputs;
   };
 }).config.gestaltPlatform

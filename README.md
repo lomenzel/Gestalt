@@ -1,131 +1,124 @@
 # Gestalt
 
-**Gestalt** is a modular framework for building applications in Nix. It leverages Nix’s functional language features to define state, actions, and targets, making it easy to create composable, reproducible applications.
+Gestalt is a modular framework for building interactive applications in Nix. You describe initial state, actions, and a view, then compile to a target (CLI, TUI, Web). A small runtime executes actions, enforces action params, and renders the view.
 
-## Vision
+## Status
 
-Gestalt aims to make application development in Nix expressive, modular, and cross-platform. By abstracting state, actions, and effects, it enables you to target multiple platforms from a single source of truth.
+This is an early, experimental project. APIs change and target capabilities are minimal. The core structure, targets, and example apps do work.
 
-### Architecture
+## Architecture (Current)
 
-Gestalt applications are built from modules that define:
+A Gestalt app is defined by a Nix module and transformed into an intermediate representation (IR). Targets consume the IR and produce runnable artifacts.
 
-- **State**: Your application’s state (can be deeply nested).
-- **Actions**: A flat attribute set of actions that can be invoked.
+Flow:
 
-Each module receives the target and application metadata as arguments.
+1. Nix module(s): state, actions, view, tests
+2. IR (computed by `lib.mkGestaltIR`)
+3. Target build (CLI/TUI/Web)
 
+### Module shape
 
-(state, actions, metadata from module evaluation, target provided as argument to modules to be able to reference native effects)
+The module interface lives in `src/modules/default.nix` and `src/modules/ir.nix`.
 
-↓
+Top-level options:
 
-(intermediate representation: adds type annotations, etc.)
+- `initialState`: attrset, default `{}`
+- `actions`: attrset of actions
+- `view`: list of functions `(state) -> { elements = [...]; actions = [...] }`
+- `stateHooks`: list of functions `(state) -> state`
+- `tests.unit`: list of unit tests (run during build)
+- `tests.e2e`: list of e2e test specs
 
-↓ ← (target)
+Action shape:
 
-(code)
+- `function`: `{ state, params } -> { state, effect }`
+- `paramType`: optional type for params (used by runtimes to prompt users)
 
+View shape:
 
-#### State
+- `elements`: list of `{ content, annotations? }`
+- `actions`: list of `{ content, actionId, annotations?, params? }`
 
-State is an attribute set containing whatever fields your app needs. Each field should ideally have:
-
-- A type
-- A display name
-- A function `(state) -> bool` to determine visibility (enables multi-page apps and navigation)
-- An initial value
-
-#### Actions
-
-Actions are the only way to modify application state. Each action should have:
-
-
-- A display name
-- A function describing the actual action
-    - `{state, params}: {state, effect}` or
-    - `{state}: {state, effect}`
-- An attribute set defining params types (params are optional)
-- a function `state: boolean` defining if its invokable
-- a role. (e.g., "default", "navigation" for graphical targets)
-- maybe a path to a state object (for graphical targets to position buttons accordingly)
-
-#### Effects
-
-Effects are still under design. The current idea is for actions to return a list of native effects and their parameters, with targets providing native effect implementations and param descriptions. For example, a native effect could be InvokeAction (with an action as a parameter) or HTTPRequest (with method, path, body, and callbacks for success/failure).
-
-This approach would make effects composable, and you could even generate effect factories from Swagger docs for type-checked HTTP APIs.
-
-#### Targets
-
-a target should provide native effects and a function
-
-```
-    buildApplication = IntermediateRepresentation:
-        resulting derivation. 
-```
-
-Potential targets include:
-
-- Web (Frontend only, compiled to HTML that can be used without server (except http native effects of cause)) (e.g., Anguar, Vue ...)
-- Android
-- QML (KDE)
-- GTK (GNOME)
-- Iced (Cosmic)
-- other platforms, you get the point
-- REST API (combined with the other targets this would make Gestalt a full stack web framework, assuming the targets have enough native effects xD)
-- KDE Plasma widget
-- you name it
-
-
-
-## Current Implementation
-
-Work in progress.
-
-### Targets
-
-Two targets are currently implemented:
-
-- **CLI**: Prints the state and accepts action names in a loop. 
-
-- **IR**: Prints the intermediate representation (IR), mainly for debugging
+If a view action includes `params`, the runtime dispatches immediately without prompting.
 
 ### Effects
 
-Not yet supported.
+Targets provide effects in `target.capabilities.effects`. Available effects (all targets):
 
-### State
+- `noop`
+- `log`
+- `httpRequest`
+- `random`
+- `invokeAction`
 
-Only initial values are supported—no annotations, types, or advanced features yet.
+Effects are plain attrsets with `id` and `params`. The web/CLI/TUI runtimes implement them.
 
-### Intermediate Representation
+### Annotations
 
-Intermediate Representation
-The IR is currently a raw representation of actions and functions, without types or a well-designed structure.
+Targets also expose UI/action annotations via `target.capabilities.annotations` (e.g. `primary`, `danger`, `heading`, `code`). These currently influence Web styling and can be used by future targets.
 
-## How to use it
+## Targets
 
-> Note: Gestalt is in early development. Many features are incomplete or experimental.
+Implemented targets:
 
-This Flake provides a `lib.<your-system>` which defines the two basic targets, and a buildGestaltApplication function.
+- `cli`: Node.js TTY loop
+- `tui`: C++ terminal UI (static lib, uses libcurl for HTTP)
+- `web`: Static HTML/CSS/JS with a tiny runtime and a built-in dev server
 
-`buildGestaltApplication` takes
+Each target builds a runnable derivation with a `bin/<app>` entry point.
 
-- `name`: string,
-- `version`: string,
-- `modules`: modules to merge with the defaults
-- `author`: ` {name: string}`
-- `target`: defaults to IR target
-- `title`: string
+## Using the flake
 
-It returnes a derivation built according to target
+The flake exports:
 
-Function transformation to IR requires Nix functions to be serializable and comparable. This is not possible with upstream Nix. My Nix fork adds two builtins: `builtins.reify` (returns a function’s AST and closure environment) and `builtins.sameFunction` (compares functions by internal pointer).
+- `overlays.default`: adds `lib` and `gestaltPlatform`
+- `packages.<system>`: example apps
 
-### Run the example
+### Build and run examples
+
+
 ```bash
-nix shell github:lomenzel/nix -c nix run github:lomenzel/gestalt\#examples.counter.cli
+nix run github:lomenzel/gestalt#counter.extraTargets.tui
 ```
-i also tried to build a wrapper with recursive nix to call my nix fork in the buildPhase of a derivation that can be built using upstream nix, but id does not work yet. See my attempt at `src/lib/upstreamNixCompatibilityWrapper.nix`
+> note: gestalt uses a patched version of nix to be able to compile nix functions to c++ or js. So you either need to run it with the patched version `nix run github:lomenzel/nix -- build github:lomenzel/gestalt#counter`, or you need to have the `recursive-nix` experimental feature enabled for gestalt to automatically switch to upstream nix compatibility mode
 
+## Nix fork vs upstream Nix
+
+Gestalt’s IR transformation needs function reification and comparison. That requires a Nix fork providing:
+
+- `builtins.reify`
+- `builtins.sameFunction`
+
+If those builtins are missing, `buildGestaltApplication` automatically switches to an upstream compatibility mode (`useUpstreamNix = true`). This mode:
+
+- Requires `src` and `mainFile` (default: `default.nix`) to be passed instead of `modules`
+- Builds using a nested flake and the Nix fork
+- Requires the `recursive-nix` system feature
+- ignores custom targets (only uses their name to find it in gestalt lib.)
+
+## `buildGestaltApplication`
+
+Defined in `src/platform/buildGestaltApplication.nix`.
+
+Arguments:
+
+- `modules`: list of module paths (native mode only)
+- `src`: source directory (required in upstream mode)
+- `mainFile`: defaults to `default.nix`
+- `target`: defaults to `gestaltPlatform.targets.tui`
+- `extraTargets`: defaults to all targets (exposed via `passthru.extraTargets`)
+- `useUpstreamNix`: override automatic detection
+
+## Examples
+
+Examples live in `examples/`:
+
+- `counter`: basic state/actions + unit/e2e tests
+- `http`: demonstrates `httpRequest` effect
+- `practiceHelper`: multi-step workflow with `random` + `invokeAction`
+
+## Current limitations
+
+- Effects are minimal and partially implemented (HTTP is GET-only in CLI/TUI).
+- E2E tests are still pretty barebones.
+- Some Nix features require the custom fork (see above).

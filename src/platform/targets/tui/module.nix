@@ -1,6 +1,9 @@
 {pkgs, lib, ...}: {
   gestaltPlatform.targets.tui = {
     capabilities = import ./capabilities.nix;
+
+    # backreference to use in upstream compat mode
+    name = "tui";
     buildApplication =
       {
         initialState,
