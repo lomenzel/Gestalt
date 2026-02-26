@@ -285,26 +285,31 @@ public:
       return Value::fromList(std::move(result));
     });
   }
+  static Value gestalt_primop_seq(Value x) {
+    return Value::lambda([](Value y){
+      return y;
+    });
+  }
 
-    static Value gestalt_primop_concatMap(Value func) {
-      if (func.type != Value::Type::Lambda) {
-        throw std::runtime_error("gestalt_primop_concatMap: expected a lambda function");
-      }
-      return Value::lambda([func](Value list) {
-        if (list.type != Value::Type::List) {
-          throw std::runtime_error("gestalt_primop_concatMap: expected a list");
-        }
-        Value::List result;
-        for (const auto& item : std::get<Value::List>(list.value)) {
-          Value mapped = func(item);
-          if (mapped.type != Value::Type::List) {
-            throw std::runtime_error("gestalt_primop_concatMap: mapping function must return a list");
-          }
-          for (const auto& e : std::get<Value::List>(mapped.value)) result.push_back(e);
-        }
-        return Value::fromList(std::move(result));
-      });
+  static Value gestalt_primop_concatMap(Value func) {
+    if (func.type != Value::Type::Lambda) {
+      throw std::runtime_error("gestalt_primop_concatMap: expected a lambda function");
     }
+    return Value::lambda([func](Value list) {
+      if (list.type != Value::Type::List) {
+        throw std::runtime_error("gestalt_primop_concatMap: expected a list");
+      }
+      Value::List result;
+      for (const auto& item : std::get<Value::List>(list.value)) {
+        Value mapped = func(item);
+        if (mapped.type != Value::Type::List) {
+          throw std::runtime_error("gestalt_primop_concatMap: mapping function must return a list");
+        }
+        for (const auto& e : std::get<Value::List>(mapped.value)) result.push_back(e);
+      }
+      return Value::fromList(std::move(result));
+    });
+  }
 
 
   static Value gestalt_primop_toString(Value x) {

@@ -77,42 +77,68 @@ in
     };
     tests.e2e = lib.mkOption {
       type = lib.types.listOf (
-        lib.types.submodule {
-          options = {
-            description = lib.mkOption {
-              type = lib.types.str;
-              default = "unnamed end-to-end test";
+        lib.types.submodule (
+          local:
+          {
+            options = {
+              description = lib.mkOption {
+                type = lib.types.str;
+                default = "unnamed end-to-end test";
+              };
+              steps = lib.mkOption {
+                type = lib.types.listOf (
+                  lib.types.submodule (
+                    { config, ... }:
+                    {
+                      options = {
+                        actionId = lib.mkOption {
+                          type = lib.types.str;
+                        };
+                        params = lib.mkOption {
+                          type = lib.types.raw;
+                          default = null;
+                        };
+                        hasParam = lib.mkOption {
+                          type = lib.types.bool;
+                          default = config.params != null;
+                        };
+                      };
+                    }
+                  )
+                );
+              };
+              pass = lib.mkOption {
+                type = lib.types.raw;
+              };
+              initialState = lib.mkOption {
+                type = lib.types.raw;
+                default = config.final.initialState;
+              };
+              effectMocks = lib.mkOption {
+                type = lib.types.attrsOf lib.types.raw;
+                default = { };
+              };
+              final.effectMocks = lib.mkOption {
+                type = lib.types.attrsOf lib.types.raw;
+                readOnly = true;
+                default = {
+                  noop = _: [ ];
+                  log = _: [ ];
+                  invokeAction =
+                    { effect, ... }:
+                    [
+                      {
+                        inherit (effect.params) params actionId;
+                      }
+                    ];
+                }
+                // local.config.effectMocks;
+              };
             };
-            steps = lib.mkOption {
-              type = lib.types.listOf (
-                lib.types.submodule ({config, ...}: {
-                  options = {
-                    actionId = lib.mkOption {
-                      type = lib.types.str;
-                    };
-                    params = lib.mkOption {
-                      type = lib.types.raw;
-                      default = null;
-                    };
-                    hasParam = lib.mkOption {
-                      type = lib.types.bool;
-                      default = config.params != null;
-                    };
-                  };
-                })
-              );
-            };
-            pass = lib.mkOption {
-              type = lib.types.raw;
-            };
-            initialState = lib.mkOption {
-              type = lib.types.raw;
-              default = config.final.initialState;
-            };
-          };
-        }
+          }
+        )
       );
-      default = [];
+      default = [ ];
     };
     view = lib.mkOption {
       type = lib.types.listOf lib.types.raw;

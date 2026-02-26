@@ -76,7 +76,7 @@
           rm $out/lib/generated/core.esm.js
         '';
       in
-      pkgs.runCommand "${name}-web" { } ''
+      pkgs.runCommand name { } ''
         mkdir -p $out/public
         cp -r ${public}/* $out/public/
 

@@ -232,9 +232,8 @@ let
         let
           exprJS = (ASTtoJS ast.value.expression reifiedFunctions).text;
           pathJS = builtins.map (pathExpr: "[${(ASTtoJS pathExpr reifiedFunctions).text}]") ast.value.path;
-          defaultJS =
-              (ASTtoJS ast.value.default reifiedFunctions).text;
-    
+          defaultJS = (ASTtoJS ast.value.default reifiedFunctions).text;
+
         in
         {
           text = ''
@@ -255,15 +254,16 @@ let
                 }
                 }
               if (result === undefined) {
-                ${ 
+                ${
                   if builtins.hasAttr "default" ast.value then
-                  "return ${defaultJS};"
-                  else ''
-                    throw new Error("GestaltCore::Value: Select failed: " + JSON.stringify({
-                      expression: ${exprJS},
-                      path: ${lib.concatStringsSep "" pathJS}
-                    }));
-                  ''
+                    "return ${defaultJS};"
+                  else
+                    ''
+                      throw new Error("GestaltCore::Value: Select failed: " + JSON.stringify({
+                        expression: ${exprJS},
+                        path: ${lib.concatStringsSep "" pathJS}
+                      }));
+                    ''
                 }
 
               }
@@ -356,6 +356,7 @@ let
     elem = "item=>list=>list.some((${jsEquals}(item)))";
     concatMap = "func=>list=>list.flatMap(func)";
     map = "func=>list=>list.map(func)";
+    # todo negative count should throw
     genList = "func=>count=>Array.from({ length: count }, (_, i) => func(i))";
     foldl' = "op=>acc=>list=>list.reduce((acc, curr)=>op(acc)(curr), acc)";
     typeOf = ''
@@ -388,18 +389,21 @@ let
     hasAttr = "attr=>s=>Object.prototype.hasOwnProperty.call(s, attr)";
     div = "a=>b=>(a / b)";
     any = "func=>list=>list.some(func)";
-    warn = ''msg=>val=>{
-      console.warn("[WARN]" + msg, val);
-      return val;
-    }'';
-    isPath = ''e=>{
-      console.warn("Paths are not supported in js target. assuming not path", e);
-      return false;
-    }'';
-    substring=''
+    warn = ''
+      msg=>val=>{
+            console.warn("[WARN]" + msg, val);
+            return val;
+          }'';
+    isPath = ''
+      e=>{
+            console.warn("Paths are not supported in js target. assuming not path", e);
+            return false;
+          }'';
+    substring = ''
       start=>end=>str=>str.substring(start, end)
     '';
     stringLength = "str=>str.length";
+    seq = "a=>b=>b";
   };
 in
 {
