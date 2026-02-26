@@ -119,18 +119,6 @@ in
   tests.e2e = [
     {
       description = "initializing practice session";
-      effectMocks = {
-        random =
-          { effect, ... }:
-          [
-            {
-              actionId = effect.params.callbackActionId;
-              params = {
-                result = effect.params.from;
-              };
-            }
-          ];
-      };
       steps = [
         {
           actionId = "init";
@@ -142,10 +130,12 @@ in
       ];
       pass =
         { state, ... }:
-        builtins.elem state.task (builtins.genList (i: {
-          start = i + 1;
-          end = i + 1;
-        }) 3);
+        builtins.elem state.task (
+          builtins.genList (i: {
+            start = i + 1;
+            end = i + 1;
+          }) 3
+        );
     }
   ];
 }

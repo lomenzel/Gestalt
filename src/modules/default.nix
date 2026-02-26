@@ -1,14 +1,12 @@
 { lib, config, ... }:
 let
-  foldl'' =
-    op: nul: list:
-    builtins.foldl' op nul list;
-  pipe =
-    (
-      op: nul: list:
-      builtins.foldl' op nul list
-    )
-      (x: f: f x);
+  # random implementation stolen from glibc
+  m = 2147483648;
+  a = 1103515245;
+  c = 12345;
+
+  nextRandom = seed: lib.mod (a * seed + c) m;
+
 in
 {
   imports = [
@@ -77,66 +75,77 @@ in
     };
     tests.e2e = lib.mkOption {
       type = lib.types.listOf (
-        lib.types.submodule (
-          local:
-          {
-            options = {
-              description = lib.mkOption {
-                type = lib.types.str;
-                default = "unnamed end-to-end test";
-              };
-              steps = lib.mkOption {
-                type = lib.types.listOf (
-                  lib.types.submodule (
-                    { config, ... }:
+        lib.types.submodule (local: {
+          options = {
+            description = lib.mkOption {
+              type = lib.types.str;
+              default = "unnamed end-to-end test";
+            };
+            steps = lib.mkOption {
+              type = lib.types.listOf (
+                lib.types.submodule (
+                  { config, ... }:
+                  {
+                    options = {
+                      actionId = lib.mkOption {
+                        type = lib.types.str;
+                      };
+                      params = lib.mkOption {
+                        type = lib.types.raw;
+                        default = null;
+                      };
+                      hasParam = lib.mkOption {
+                        type = lib.types.bool;
+                        default = config.params != null;
+                      };
+                    };
+                  }
+                )
+              );
+            };
+            pass = lib.mkOption {
+              type = lib.types.raw;
+            };
+            initialState = lib.mkOption {
+              type = lib.types.raw;
+              default = config.final.initialState;
+            };
+            effectMocks = lib.mkOption {
+              type = lib.types.attrsOf lib.types.raw;
+              default = { };
+            };
+            final.effectMocks = lib.mkOption {
+              type = lib.types.attrsOf lib.types.raw;
+              readOnly = true;
+              default = {
+                noop = _: [ ];
+                log = _: [ ];
+                invokeAction =
+                  { effect, ... }:
+                  [
                     {
-                      options = {
-                        actionId = lib.mkOption {
-                          type = lib.types.str;
-                        };
-                        params = lib.mkOption {
-                          type = lib.types.raw;
-                          default = null;
-                        };
-                        hasParam = lib.mkOption {
-                          type = lib.types.bool;
-                          default = config.params != null;
-                        };
+                      inherit (effect.params) params actionId;
+                    }
+                  ];
+                random =
+                  { effect, emittedEffects, ... }:
+                  [
+                    {
+                      actionId = effect.params.callbackActionId;
+                      params = {
+                        result =
+                          effect.params.from
+                          + (lib.mod (nextRandom (builtins.length emittedEffects)) (
+                            effect.params.to - effect.params.from + 1
+                          ));
                       };
                     }
-                  )
-                );
-              };
-              pass = lib.mkOption {
-                type = lib.types.raw;
-              };
-              initialState = lib.mkOption {
-                type = lib.types.raw;
-                default = config.final.initialState;
-              };
-              effectMocks = lib.mkOption {
-                type = lib.types.attrsOf lib.types.raw;
-                default = { };
-              };
-              final.effectMocks = lib.mkOption {
-                type = lib.types.attrsOf lib.types.raw;
-                readOnly = true;
-                default = {
-                  noop = _: [ ];
-                  log = _: [ ];
-                  invokeAction =
-                    { effect, ... }:
-                    [
-                      {
-                        inherit (effect.params) params actionId;
-                      }
-                    ];
-                }
-                // local.config.effectMocks;
-              };
+                  ];
+              }
+              // local.config.effectMocks;
             };
-          }
-        )
+          };
+        })
       );
       default = [ ];
     };
