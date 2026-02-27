@@ -76,38 +76,77 @@
           rm $out/lib/generated/core.esm.js
         '';
       in
-      pkgs.runCommand name { } ''
-        mkdir -p $out/public
-        cp -r ${public}/* $out/public/
+      pkgs.runCommand name
+        {
+          passthru = {
+            screenshot =
+              pkgs.runCommand "${name}-web-screenshot.png"
+                {
+                  nativeBuildInputs = [ pkgs.chromium ];
+                  # Critical: The Nix sandbox has no system fonts. Without this,
+                  # Chromium will render all text as invisible or square boxes.
+                  FONTCONFIG_FILE = pkgs.makeFontsConf {
+                    fontDirectories = [ pkgs.dejavu_fonts ];
+                  };
+                }
+                ''
+                  # Chromium requires a writable HOME to store temporary profile data
+                  export HOME=$(mktemp -d)
 
-        mkdir -p $out/bin
-        cp ${pkgs.writeShellScript "${name}-server" ''
-          cd ${public}
-          echo "Starting server for ${name} on port 8080..."
-          ${pkgs.lib.getExe pkgs.python3} ${pkgs.writeText "server.py" ''
-            from http.server import SimpleHTTPRequestHandler, HTTPServer
-            import sys
+                  echo "Taking headless screenshot of ${name}..."
+                  mkdir -p $out
 
-            class CORSRequestHandler(SimpleHTTPRequestHandler):
-                def end_headers(self):
-                    self.send_header('Access-Control-Allow-Origin', '*')
-                    self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE')
-                    self.send_header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
-                    SimpleHTTPRequestHandler.end_headers(self)
+                  cp -r ${public} ./app-copy
+                  chmod -R +w ./app-copy
+                  echo "* { transition: none !important; animation: none !important; }" >> ./app-copy/styles.css
 
-                def do_OPTIONS(self):
-                    self.send_response(200, "OK")
-                    self.send_header('Content-Length', '0')
-                    self.end_headers()
+                  # Use headless Chromium to render the local HTML file.
+                  chromium \
+                    --headless=new \
+                    --no-sandbox \
+                    --disable-dev-shm-usage \
+                    --disable-gpu \
+                    --hide-scrollbars \
+                    --window-size=960,600 \
+                    --allow-file-access-from-files \
+                    --virtual-time-budget=4000 \
+                    --screenshot=$out/screenshot.png \
+                    "file://$PWD/app-copy/index.html"
+                '';
+          };
+        }
+        ''
+          mkdir -p $out/public
+          cp -r ${public}/* $out/public/
 
-            if __name__ == '__main__':
-                port = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
-                server = HTTPServer(('0.0.0.0', port), CORSRequestHandler)
-                print(f"Serving on port {port}")
-                server.serve_forever()
-          ''} 8080
-        ''} $out/bin/${name}
-      '';
+          mkdir -p $out/bin
+          cp ${pkgs.writeShellScript "${name}-server" ''
+            cd ${public}
+            echo "Starting server for ${name} on port 8080..."
+            ${pkgs.lib.getExe pkgs.python3} ${pkgs.writeText "server.py" ''
+              from http.server import SimpleHTTPRequestHandler, HTTPServer
+              import sys
+
+              class CORSRequestHandler(SimpleHTTPRequestHandler):
+                  def end_headers(self):
+                      self.send_header('Access-Control-Allow-Origin', '*')
+                      self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE')
+                      self.send_header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
+                      SimpleHTTPRequestHandler.end_headers(self)
+
+                  def do_OPTIONS(self):
+                      self.send_response(200, "OK")
+                      self.send_header('Content-Length', '0')
+                      self.end_headers()
+
+              if __name__ == '__main__':
+                  port = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
+                  server = HTTPServer(('0.0.0.0', port), CORSRequestHandler)
+                  print(f"Serving on port {port}")
+                  server.serve_forever()
+            ''} 8080
+          ''} $out/bin/${name}
+        '';
 
   };
 }

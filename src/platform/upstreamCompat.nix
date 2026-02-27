@@ -34,7 +34,7 @@ let
         };
       in
         {
-          packages.${pkgs.hostPlatform.system}.default = pkgs.gestaltPlatform.buildGestaltApplication {
+          packages.${pkgs.hostPlatform.system}.default = pkgs.gestaltPlatform.buildApplication {
             modules = [ ${src}/${mainFile} ];
             target = pkgs.gestaltPlatform.targets.''${"${target.name}"};
             extraTargets = [];
@@ -68,7 +68,7 @@ pkgs.stdenv.mkDerivation {
 
   passthru = {
     extraTargets = builtins.mapAttrs (name: target: 
-      config.gestaltPlatform.buildGestaltApplication {
+      config.gestaltPlatform.buildApplication {
         useUpstreamNix = true;
         inherit src mainFile;
         targetName = name;

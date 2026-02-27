@@ -89,16 +89,16 @@ Gestalt’s IR transformation needs function reification and comparison. That re
 - `builtins.reify`
 - `builtins.sameFunction`
 
-If those builtins are missing, `buildGestaltApplication` automatically switches to an upstream compatibility mode (`useUpstreamNix = true`). This mode:
+If those builtins are missing, `buildApplication` automatically switches to an upstream compatibility mode (`useUpstreamNix = true`). This mode:
 
 - Requires `src` and `mainFile` (default: `default.nix`) to be passed instead of `modules`
 - Builds using a nested flake and the Nix fork
 - Requires the `recursive-nix` system feature
 - ignores custom targets (only uses their name to find it in gestalt lib.)
 
-## `buildGestaltApplication`
+## `buildApplication`
 
-Defined in `src/platform/buildGestaltApplication.nix`.
+Defined in `src/platform/buildApplication.nix`.
 
 Arguments:
 

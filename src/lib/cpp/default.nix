@@ -79,8 +79,8 @@
       '';
 
       buildPhase = ''
-        g++ -O3 -c core.cpp -o core.o
-        ar rcs libgestalt.a core.o
+        $CXX -O3 -c core.cpp -o core.o
+        $AR rcs libgestalt.a core.o
       '';
 
       checkPhase = ''
@@ -97,7 +97,7 @@ int main() {
 }
 EOF
 
-        g++ -O3 unitTests.cpp libgestalt.a -o unitTests
+        $CXX -O3 unitTests.cpp libgestalt.a -o unitTests
         ./unitTests
       '';
 

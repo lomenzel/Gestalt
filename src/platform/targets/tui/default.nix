@@ -3,18 +3,24 @@
   ir,
   curl,
   nlohmann_json,
+  runCommand,
+  ansilove,
   lib,
 }:
-let 
+let
   libgestalt = lib.gestaltCore.cpp ir;
-in 
-stdenv.mkDerivation {
+in
+stdenv.mkDerivation (finalAttrs: {
   pname = ir.name;
   version = ir.version;
   src = ./src;
-  buildInputs = [ libgestalt curl nlohmann_json ];
+  buildInputs = [
+    libgestalt
+    curl
+    nlohmann_json
+  ];
   buildPhase = ''
-    g++ -O3 -flto -I ${libgestalt}/include -I ${nlohmann_json}/include main.cpp -o main ${libgestalt}/lib/libgestalt.a -lcurl
+    $CXX -O3 -flto -I ${libgestalt}/include -I ${nlohmann_json}/include main.cpp -o main ${libgestalt}/lib/libgestalt.a -lcurl
   '';
 
   installPhase = ''
@@ -26,5 +32,17 @@ stdenv.mkDerivation {
   };
   passthru = {
     inherit libgestalt;
+    screenshot =
+      runCommand "${ir.name}.png"
+        {
+          nativeBuildInputs = [ ansilove ];
+        }
+        ''
+          mkdir -p $out
+          echo "0" | ${finalAttrs.finalPackage}/bin/${ir.name} > capture.ansi
+
+          ansilove capture.ansi -o $out/screenshot.png
+
+        '';
   };
-}
+})

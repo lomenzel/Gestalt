@@ -6,7 +6,7 @@
   ...
 }:
 {
-  gestaltPlatform.buildGestaltApplication =
+  gestaltPlatform.buildApplication =
     {
       modules ? throw "You must provide a list of modules to build an application.",
       target ? config.gestaltPlatform.targets.tui,
@@ -52,6 +52,7 @@
             // (lib.mapAttrs (
               name: target: target.buildApplication (lib.mkGestaltIR { inherit target ; modules = modules'; })
             ) extraTargets);
+          publish = config.gestaltPlatform.publish modules';
         };
       });
 }

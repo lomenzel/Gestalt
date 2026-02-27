@@ -1,5 +1,7 @@
 { config, lib, ... }:
 let
+
+  sanitizeVarName = name: if name == "int" then "_int" else name;
   primopToCppName = p: "GestaltCore::gestalt_primop_${builtins.replaceStrings [ "'" ] [ "_" ] p}";
   toCpp' =
     nixExpr: reifiedFunctions:
@@ -97,7 +99,7 @@ let
           paramBinding =
             (
               if ast.value.arguments.identifier != null then
-                "Value ${ast.value.arguments.identifier} = __gestalt_param;\n"
+                "Value ${ sanitizeVarName ast.value.arguments.identifier} = __gestalt_param;\n"
               else
                 ""
             )
@@ -108,16 +110,16 @@ let
                     param:
                     if builtins.hasAttr "defaultExpr" param then
                       ''
-                        Value ${param.name};
+                        Value ${ sanitizeVarName param.name};
                         try {
-                          ${param.name} = __gestalt_param["${param.name}"];
+                          ${ sanitizeVarName param.name} = __gestalt_param["${ sanitizeVarName param.name}"];
                         } catch(...) {
-                          ${param.name} = ${(ASTtoCpp param.defaultExpr reifiedFunctions).text};                    
+                          ${ sanitizeVarName param.name} = ${(ASTtoCpp param.defaultExpr reifiedFunctions).text};                    
                         }
                       ''
                     else
                       ''
-                        Value ${param.name} = __gestalt_param["${param.name}"];
+                        Value ${ sanitizeVarName param.name} = __gestalt_param["${ sanitizeVarName param.name}"];
                       ''
                   ) ast.value.arguments.formals
                 )
@@ -166,7 +168,7 @@ let
                     });
                     ${lambdaBody}
                   };
-                  return Value::lambda([=, _rec_func](Value __gestalt_param) {
+                  return Value::lambda([=](Value __gestalt_param) {
                     return _rec_func(_rec_func, __gestalt_param);
                   });
                 }())
@@ -202,7 +204,7 @@ let
         }
       else if ast._expr == "var" then
         {
-          text = ast.value.name;
+          text = sanitizeVarName ast.value.name;
           inherit reifiedFunctions;
         }
       else if ast._expr == "if" then

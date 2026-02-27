@@ -2,6 +2,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixFork.url = "github:lomenzel/nix";
+    nix-appimage.url = "github:ralismark/nix-appimage";
   };
 
   outputs =
@@ -16,7 +17,9 @@
           prev.lib
           // (import ./src/lib {
             pkgs = prev;
-          });
+          }) // {
+            mkAppImage = inputs.nix-appimage.lib.${prev.stdenv.hostPlatform.system}.mkAppImage;
+          };
         gestaltPlatform = (
           import ./src/platform {
             pkgs = final;
@@ -35,17 +38,17 @@
           };
         in
         {
-          practiceHelper = pkgs.gestaltPlatform.buildGestaltApplication {
+          practiceHelper = pkgs.gestaltPlatform.buildApplication {
             src = ./examples/practiceHelper;
             target = pkgs.gestaltPlatform.targets.web;
             extraTargets = pkgs.gestaltPlatform.targets;
           };
-          counter = pkgs.gestaltPlatform.buildGestaltApplication {
+          counter = pkgs.gestaltPlatform.buildApplication {
             src = ./examples/counter;
           };
-          http = pkgs.gestaltPlatform.buildGestaltApplication {
+          http = pkgs.gestaltPlatform.buildApplication {
             src = ./examples/http;
-           };
+          };
 
         }
       );
