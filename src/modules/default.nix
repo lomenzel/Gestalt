@@ -19,8 +19,14 @@ in
       default = { };
       description = "The initial state of the application.";
     };
+    showcaseState = lib.mkOption {
+      type = lib.types.attrs;
+      default = config.final.initialState;
+      description = "A showcase state of the application, used for marketing screenshots :)";
+    };
     actions = lib.mkOption {
       type = lib.types.attrs;
+      default = {};
     };
     types = lib.mkOption {
       type = lib.types.attrs;
@@ -151,7 +157,17 @@ in
     };
     view = lib.mkOption {
       type = lib.types.listOf lib.types.raw;
-      default = [ ];
+      default = [(
+        state: {
+          elements = [{
+            content = "state: ${builtins.toJSON state}";
+          }];
+          actions = builtins.attrNames config.actions |> builtins.map (actionId: {
+            content = actionId;
+            actionId = actionId;
+          });
+        }
+      )];
       description = ''
         function taking state and returning 
         {

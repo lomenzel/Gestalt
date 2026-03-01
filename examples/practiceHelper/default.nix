@@ -13,6 +13,18 @@ in
     practiceRange = "not_initialized. run init action to start";
   };
 
+  showcaseState = {
+    done = [];
+    practiceRange = {
+      start = 1;
+      end = 5;
+    };
+    task = {
+      start = 2;
+      end = 4;
+    };
+  };
+
   view = [
     (state: {
       elements = [
@@ -120,7 +132,6 @@ in
               done = state.done;
             }) params.result;
           };
-          effect = target.capabilities.effects.noop;
         };
       paramType =
         (target.capabilities.effects.random {
@@ -146,7 +157,6 @@ in
             state = state // {
               task = "All done! Please start a new Session.";
             };
-            effect = target.capabilities.effects.noop;
           }
         else
           {

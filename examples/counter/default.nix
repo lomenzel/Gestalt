@@ -29,10 +29,8 @@ let
   add = x: y: x + y;
 in
 {
-  initialState = {
-    counter = 0;
-  };
-
+  initialState.counter = 0;
+  showcaseState.counter = 42;
   tests.unit = [
     {
       func = sum;
@@ -115,16 +113,13 @@ in
   ];
 
   actions = {
-    increment = {
-      function =
-        { state, ... }:
-        {
-          state = state // {
-            counter = state.counter + 1;
-          };
-          effect = target.capabilities.effects.noop;
+    increment =
+      { state, ... }:
+      {
+        state = state // {
+          counter = state.counter + 1;
         };
-    };
+      };
 
     incrementBy = {
       function =
@@ -133,7 +128,6 @@ in
           state = state // {
             counter = state.counter + params.amount;
           };
-          effect = target.capabilities.effects.noop;
         };
       paramType = {
         _type = "struct";
@@ -144,40 +138,32 @@ in
         };
       };
     };
-    decrement = {
-      function =
-        { state, ... }:
-        {
-          state = state // {
-            counter = state.counter - 1;
-          };
-          effect = target.capabilities.effects.noop;
+    decrement =
+      { state, ... }:
+      {
+        state = state // {
+          counter = state.counter - 1;
         };
-    };
+      };
 
-    sumUp = {
-      function =
-        { state, ... }:
-        {
-          state = state // {
-            counter = sum state.counter;
-          };
-          effect = target.capabilities.effects.noop;
+    sumUp =
+      { state, ... }:
+      {
+        state = state // {
+          counter = sum state.counter;
         };
-    };
+      };
 
-    reset = {
-      function =
-        { state, ... }:
-        {
-          state = state // {
-            counter = config.initialState.counter;
-          };
-          effect = target.capabilities.effects.log {
-            message = "Counter reset to zero.";
-          };
+    reset =
+      { state, ... }:
+      {
+        state = state // {
+          counter = config.initialState.counter;
         };
-    };
+        effect = target.capabilities.effects.log {
+          message = "Counter reset to zero.";
+        };
+      };
   };
   title = "Counter (Gestalt Example)";
   name = "example-counter";

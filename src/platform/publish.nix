@@ -35,8 +35,16 @@
             mkdir -p $out/download
             (cd ${web}/public && ${pkgs.zip}/bin/zip -r $out/download/${webIR.name}.zip .)
             cp ${lib.mkAppImage {program = "${tui}/bin/${webIR.name}"; }} $out/download/${webIR.name}.AppImage
-            cp ${tui.screenshot}/screenshot.png $out/download/${webIR.name}-tui.png
-            cp ${web.screenshot}/screenshot.png $out/download/${webIR.name}-web.png
+            cp ${(tui.override (old: {
+              ir = old.ir // {
+                initialState = old.ir.showcaseState;
+              };
+            })).screenshot}/screenshot.png $out/download/${webIR.name}-tui.png
+            cp ${(web.override (old: {
+              ir = old.ir // {
+                initialState = old.ir.showcaseState;
+              };
+            })).screenshot}/screenshot.png $out/download/${webIR.name}-web.png
           '';
       };
       full = config.gestaltPlatform.buildApplication {

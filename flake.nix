@@ -49,6 +49,9 @@
           http = pkgs.gestaltPlatform.buildApplication {
             src = ./examples/http;
           };
+          minimal = pkgs.gestaltPlatform.buildApplication {
+            src = ./examples/minimal;
+          };
 
         }
       );

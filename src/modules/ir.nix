@@ -1,14 +1,17 @@
-{ lib, config, ... }:
+{ lib, config, target, ... }:
 {
   options = {
     name = lib.mkOption {
       type = lib.types.str;
+      default = "untitled-application";
     };
     author.name = lib.mkOption {
       type = lib.types.str;
+      default = "Anonymous Author";
     };
     version = lib.mkOption {
       type = lib.types.str;
+      default = "0";
     };
     title = lib.mkOption {
       type = lib.types.str;
@@ -28,6 +31,7 @@
           actions = config.final.actions;
           view = config.final.view;
           author = config.author;
+          showcaseState = lib.pipe config.showcaseState config.stateHooks;
           unitTests =
             let
               tests = config.tests;
@@ -117,14 +121,21 @@
 
           builtins.mapAttrs (
             _: action:
-            action
+            let
+            af_ =  if builtins.typeOf action == "lambda" then action else action.function;
+            af = {state, params}@p: {
+              inherit state;
+              effect = target.capabilities.effects.noop;
+            } // (af_ p);
+            in
+            (if builtins.typeOf action == "lambda" then {} else action)
             // {
               function =
                 { state, params }:
                 {
-                  state = lib.pipe (action.function { inherit state params; }).state (stateHooks);
+                  state = lib.pipe (af { inherit state params; }).state (stateHooks);
                   # b = throw config.stateHooks;
-                  effect = (action.function { inherit state params; }).effect;
+                  effect = (af { inherit state params; }).effect;
                 };
             }
           ) config.actions;

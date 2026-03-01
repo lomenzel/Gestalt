@@ -3,7 +3,7 @@
   modules = [
     ./buildApplication.nix
     ./targets/cli/module.nix
-    ./targets/web/default.nix
+    ./targets/web/module.nix
     ./targets/tui/module.nix
     ./publish.nix
     {
