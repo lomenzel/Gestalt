@@ -30,8 +30,7 @@ void flushInput() {
 
 void invokeAction(GestaltCore& core, const std::string& actionName, const Value& params) {
     try {
-        Value effect = core.dispatch(actionName, params);
-        executeEffect(core, effect);
+        core.dispatch(actionName, params);
     } catch (const std::exception& e) {
         std::cout << "\n[ERROR] Action '" << actionName << "' failed: " << e.what() << "\n";
         std::cout << "Press Enter to continue...";
@@ -75,7 +74,6 @@ static size_t curlWriteHeaderCallback(char* buffer, size_t size, size_t nitems, 
     return totalSize;
 }
 
-// --- Effect Router ---
 void executeEffect(GestaltCore& core, const Value& effect) {
     if (effect.type != Value::Type::Set) return;
 
@@ -199,12 +197,24 @@ void executeEffect(GestaltCore& core, const Value& effect) {
     }
 }
 
-// --- Main ---
 int main() {
-    // Initialize cURL globally once per app lifetime
     curl_global_init(CURL_GLOBAL_DEFAULT);
+
+    GestaltCore* corePtr = nullptr;
+    std::vector<Value> pendingEffects;
     
-    GestaltCore core;
+    GestaltCore core = GestaltCore([&](Value effect) {
+        if(corePtr)
+            executeEffect(*corePtr, effect);
+        else
+            pendingEffects.push_back(effect);
+    });
+
+    corePtr = &core;
+
+    for (const Value& eff : pendingEffects) {
+        executeEffect(core, eff);
+    }
 
     while (true) {
         clearScreen();

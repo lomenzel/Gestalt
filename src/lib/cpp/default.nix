@@ -1,4 +1,9 @@
-{ lib, config, pkgs, ... }:
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}:
 {
   imports = [
     ./toCpp.nix
@@ -18,6 +23,7 @@
               author
               ;
           };
+          initialEffect = ir.initialEffect;
           actionParams = builtins.mapAttrs (
             _: action:
             let
@@ -54,6 +60,7 @@
               "%actionParams%"
               "%unitTests%"
               "%meta%"
+              "%initialEffect%"
             ]
             [
               constructorParam.initialState
@@ -62,16 +69,17 @@
               constructorParam.actionParams
               constructorParam.unitTests
               constructorParam.meta
+              constructorParam.initialEffect
             ]
         |> pkgs.writeText "core.cpp";
     in
     pkgs.stdenv.mkDerivation {
-      pname = "libgestalt";
+      pname = "libgestalt-cpp";
       version = "0.1.0";
       src = null;
       dontUnpack = true;
 
-      buildInputs = [ pkgs.nlohmann_json];
+      buildInputs = [ pkgs.nlohmann_json ];
 
       postPatch = ''
         cp ${header} core.hpp
@@ -83,22 +91,25 @@
         $AR rcs libgestalt.a core.o
       '';
 
-      checkPhase = ''
-        echo "Running unit tests..."
+      checkPhase = pkgs.writeShellScript "check" ''
+        echo "Compiling unit tests..."
 
         cat > unitTests.cpp <<'EOF'
-#include "core.hpp"
-#include <iostream>
-int main() {
-  GestaltCore core;
-  core.runUnitTests();
-  std::cout << "All tests passed!" << std::endl;
-  return 0;
-}
-EOF
+        #include "core.hpp"
+        #include <iostream>
 
+        using Value = GestaltCore::Value;
+        int main() {
+          GestaltCore::runUnitTests(${constructorParam.unitTests});
+          std::cout << "All tests passed!" << std::endl;
+          return 0;
+        }
+        EOF
+      
         $CXX -O3 unitTests.cpp libgestalt.a -o unitTests
-        ./unitTests
+
+        echo "Running unit tests..."
+        ${pkgs.stdenv.hostPlatform.emulator pkgs.buildPackages} ./unitTests
       '';
 
       doCheck = true;

@@ -31,6 +31,9 @@ in
 {
   initialState.counter = 0;
   showcaseState.counter = 42;
+  initialEffect = target.capabilities.effects.invokeAction {
+    actionId = "increment";
+  };
   tests.unit = [
     {
       func = sum;
@@ -70,8 +73,8 @@ in
           views,
           ...
         }:
-        state.counter == 0
-        && builtins.all (effect: effect == target.capabilities.effects.noop) emittedEffects
+        state.counter == 1
+        && builtins.all (effect: effect == target.capabilities.effects.noop) (lib.tail emittedEffects)
         && builtins.all (
           view: builtins.any (element: lib.hasPrefix "Counter" element.content) view.elements
         ) views;

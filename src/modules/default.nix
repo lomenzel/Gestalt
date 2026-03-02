@@ -1,4 +1,4 @@
-{ lib, config, ... }:
+{ lib, config, target, ... }:
 let
   # random implementation stolen from glibc
   m = 2147483648;
@@ -23,6 +23,11 @@ in
       type = lib.types.attrs;
       default = config.final.initialState;
       description = "A showcase state of the application, used for marketing screenshots :)";
+    };
+    initialEffect = lib.mkOption {
+      type = lib.types.raw;
+      default = target.capabilities.effects.noop;
+      description = "effect that should be run at application startup";
     };
     actions = lib.mkOption {
       type = lib.types.attrs;
@@ -129,9 +134,11 @@ in
                 invokeAction =
                   { effect, ... }:
                   [
-                    {
-                      inherit (effect.params) params actionId;
-                    }
+                    ({
+                      inherit (effect.params) actionId;
+                    } // (if builtins.hasAttr "params" effect.params then {
+                      params = effect.params.params;
+                    } else {}))
                   ];
                 random =
                   { effect, emittedEffects, ... }:

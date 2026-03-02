@@ -18,6 +18,7 @@
         title,
         unitTests,
         showcaseState,
+        ...
       }@ir:
 
       pkgs.callPackage ./default.nix { inherit ir; };

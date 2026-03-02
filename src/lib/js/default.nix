@@ -38,44 +38,59 @@
         actions = builtins.mapAttrs (name: action: action.function) ir.actions;
         initialState = ir.initialState;
         inherit actionParams;
-        inherit (ir) view;
+        inherit (ir)
+          view
+          initialEffect
+          name
+          version
+          author
+          ;
       };
-      coreJS = pkgs.writeText "gestaltCore.js" ''
-        // class definition
-        ${builtins.readFile ./core.js}
-
-        export const core = new GestaltCore(${config.lib.toJS constructorParam});
-        export const actionParamTypes = ${config.lib.toJS actionParams};
-        export const meta = ${
-          config.lib.toJS {
-            inherit (ir)
-              name
-              title
-              version
-              author
-              ;
-          }
-        }
-      '';
+      coreJS = pkgs.writeText "gestaltCore.js" (
+        builtins.readFile ./core.js
+        |>
+          lib.replaceStrings
+            [
+              "'%initialState%'"
+              "'%actions%'"
+              "'%view%'"
+              "'%actionParams%'"
+              "'%initialEffect%'"
+              "'%name%'"
+              "'%version%'"
+              "'%authorName%'"
+            ]
+            (
+              lib.map config.lib.toJS (
+                with constructorParam;
+                [
+                  initialState
+                  actions
+                  view
+                  actionParams
+                  initialEffect
+                  name
+                  version
+                  author.name
+                ]
+              )
+            )
+      );
     in
     pkgs.stdenv.mkDerivation {
-      pname = ir.name + "-core";
+      pname = "libgestalt-js";
       version = ir.version;
       dontUnpack = true;
-      nativeBuildInputs = [ pkgs.nodejs ];
 
       checkPhase = ''
         echo "Running unit tests..."
 
-        node ${
-          pkgs.writeText "unitTests.js" ''
-            import { core } from "${coreJS}";
+        ${pkgs.buildPackages.nodejs}/bin/node ${pkgs.writeText "unitTests.js" ''
+          import GestaltCore from "${coreJS}";
 
-            core.runUnitTests(${config.lib.toJS ir.unitTests});
-          ''
-        }
+          GestaltCore.runUnitTests(${config.lib.toJS ir.unitTests});
+        ''}
 
-        echo "E2E tests not implemented yet."
         echo "All tests passed!"
       '';
       doCheck = true;

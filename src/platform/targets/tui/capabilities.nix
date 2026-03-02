@@ -107,7 +107,9 @@
         _type = "jsonvalue";
       };
       id = "invokeAction";
-      params = params;
+      params = {
+        params = null;
+      } // params;
     };
 
   };

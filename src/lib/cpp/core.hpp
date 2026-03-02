@@ -224,7 +224,7 @@ public:
   };
   using Observer = std::function<void(const Value&)>;
 
-  explicit GestaltCore();
+  explicit GestaltCore(std::function<void(Value)> effectCallback);
 
   static Value gestalt_primop_sub(Value x) {
     return Value::lambda([x](Value y) {
@@ -236,6 +236,18 @@ public:
         throw std::runtime_error("gestalt_primop_sub: both arguments must be numbers");
       }
     });
+  }
+
+  static Value gestalt_primop_tail(Value list) {
+    if (list.type != Value::Type::List) {
+      throw std::runtime_error("gestalt_primop_tail: expected a list");
+    }
+    const auto& vec = std::get<Value::List>(list.value);
+    if (vec.empty()) {
+      throw std::runtime_error("gestalt_primop_tail: cannot take tail of an empty list");
+    }
+    Value::List tailVec(vec.begin() + 1, vec.end());
+    return Value::fromList(std::move(tailVec));
   }
 
   static Value gestalt_primop_foldl_(Value func) {
@@ -610,11 +622,9 @@ static Value gestalt_primop_substring(Value start) {
     }
   }
 
-  Value dispatch(const std::string& actionName, const Value& params = Value());
+  void dispatch(const std::string& actionName, const Value& params = Value());
 
   void reset();
-
-  void runUnitTests();
 
   Value getState() const;
   Value viewState() const;
@@ -625,16 +635,20 @@ static Value gestalt_primop_substring(Value start) {
   size_t subscribe(Observer obs);
   void unsubscribe(size_t id);
 
+  static void runUnitTests(Value tests);
+
 private:
   Value state_;
   Value actions_;
   Value view_;
   Value initialState_;
+  Value initialEffect_;
   Value actionParams_;
-  Value unitTests_;
   Value meta_;
+  std::function<void(Value)> effectCallback_;
 
   size_t nextObserverId_ = 1;
   std::unordered_map<size_t, Observer> observers_;
 };
+
 

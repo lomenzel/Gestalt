@@ -394,6 +394,7 @@ let
             console.warn("[WARN]" + msg, val);
             return val;
           }'';
+    tail = "list=>list.slice(1)";
     isPath = ''
       e=>{
             console.warn("Paths are not supported in js target. assuming not path", e);

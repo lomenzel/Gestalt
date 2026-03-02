@@ -18,7 +18,7 @@
           // (import ./src/lib {
             pkgs = prev;
           }) // {
-            mkAppImage = inputs.nix-appimage.lib.${prev.stdenv.hostPlatform.system}.mkAppImage;
+            mkAppImage = inputs.nix-appimage.lib.${prev.stdenv.buildPlatform.system}.mkAppImage;
           };
         gestaltPlatform = (
           import ./src/platform {
@@ -32,10 +32,10 @@
       packages = nixpkgs.lib.genAttrs nixpkgs.lib.systems.flakeExposed (
         system:
         let
-          pkgs = import nixpkgs {
+          pkgs = (import nixpkgs {
             inherit system;
             overlays = [ self.overlays.default ];
-          };
+          });
         in
         {
           practiceHelper = pkgs.gestaltPlatform.buildApplication {

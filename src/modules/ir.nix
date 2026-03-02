@@ -28,6 +28,7 @@
           title = config.title;
           version = config.version;
           initialState = config.final.initialState;
+          initialEffect = config.initialEffect;
           actions = config.final.actions;
           view = config.final.view;
           author = config.author;
@@ -36,6 +37,7 @@
             let
               tests = config.tests;
               final = config.final;
+              initialEffect = config.initialEffect;
             in
             (builtins.map (test: {
               inherit (test) description func params;
@@ -94,7 +96,12 @@
                     state = initialState;
                     emittedEffects = [ ];
                     states = [ initialState ];
-                  } test.steps
+                  } (test.steps ++ (test.final.effectMocks.${initialEffect.id} {
+                    effect = initialEffect;
+                    emittedEffects = [];
+                    state = initialState;
+                    states = [ initialState ];
+                  }))
                   |> (
                     res:
                     res

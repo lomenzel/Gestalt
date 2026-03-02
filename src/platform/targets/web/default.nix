@@ -1,6 +1,23 @@
-{ ir, writeText, runCommand, lib, chromium, makeFontsConf, dejavu_fonts, writeShellScript, python3 }:
+{
+  ir,
+  writeText,
+  runCommand,
+  lib,
+  makeFontsConf,
+  dejavu_fonts,
+  chromium,
+  writeShellScript,
+  buildPackages,
+  stdenv,
+  python3,
+}:
 let
-  inherit (ir) title author version name;
+  inherit (ir)
+    title
+    author
+    version
+    name
+    ;
   indexHTML = writeText "index.html" ''
     <!DOCTYPE html>
     <html lang="en">
@@ -47,11 +64,7 @@ let
     cp ${lib.gestaltCore.js ir} $out/lib/generated/core.esm.js
     # TODO gestaltCore should probably produce a browser-friendly version :)
     sed \
-      -e '/^import\s\+/d' \
-      -e "s/process.exit(1)/console.error(\"Cannot exit in browser\")/g" \
-      -e 's/^export const core = /window.core = /' \
-      -e 's/^export const actionParamTypes = /window.actionParamTypes = /' \
-      -e 's/^export const meta = /window.meta = /' \
+      -e 's/^export default/window.GestaltCore =/' \
       $out/lib/generated/core.esm.js > $out/lib/generated/core.js
 
     rm $out/lib/generated/core.esm.js
@@ -61,13 +74,13 @@ runCommand name
   {
     passthru = {
       screenshot =
-        runCommand "${name}-web-screenshot.png"
+        buildPackages.runCommand "${name}-web-screenshot.png"
           {
-            nativeBuildInputs = [ chromium ];
+            nativeBuildInputs = [ buildPackages.chromium ];
             # Critical: The Nix sandbox has no system fonts. Without this,
             # Chromium will render all text as invisible or square boxes.
-            FONTCONFIG_FILE = makeFontsConf {
-              fontDirectories = [ dejavu_fonts ];
+            FONTCONFIG_FILE = buildPackages.makeFontsConf {
+              fontDirectories = [ buildPackages.dejavu_fonts ];
             };
           }
           ''
@@ -82,6 +95,7 @@ runCommand name
             echo "* { transition: none !important; animation: none !important; }" >> ./app-copy/styles.css
 
             # Use headless Chromium to render the local HTML file.
+            # ${stdenv.hostPlatform.emulator buildPackages}
             chromium \
               --headless=new \
               --no-sandbox \

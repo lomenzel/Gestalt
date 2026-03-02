@@ -2,17 +2,20 @@
 
 using Value = GestaltCore::Value;
 
-GestaltCore::GestaltCore()
+GestaltCore::GestaltCore(std::function<void(Value)> effectCallback)
   : state_(%initialState%),
     actions_(%actions%),
     view_(%view%),
     initialState_(%initialState%),
     actionParams_(%actionParams%),
-    unitTests_(%unitTests%),
-    meta_(%meta%)
-{}
+    initialEffect_(%initialEffect%),
+    meta_(%meta%),
+    effectCallback_(std::move(effectCallback))
+{
+  effectCallback_(initialEffect_);
+}
 
-Value GestaltCore::dispatch(const std::string& actionName, const Value& params) {
+void GestaltCore::dispatch(const std::string& actionName, const Value& params) {
   // Lookup action in the dynamic `actions_` set
   if (actions_.type != Value::Type::Set) throw std::runtime_error("no actions available");
   auto &set = std::get<Value::Set>(actions_.value);
@@ -80,10 +83,8 @@ Value GestaltCore::dispatch(const std::string& actionName, const Value& params) 
     try { kv.second(state_); } catch (...) {}
   }
 
-  // Return effect if present
   auto effIt = rset.find("effect");
-  if (effIt != rset.end()) return effIt->second;
-  return Value::null();
+  if (effIt != rset.end() && effectCallback_) effectCallback_(effIt->second);
 }
 
 GestaltCore::Value GestaltCore::getState() const {
@@ -109,8 +110,7 @@ void GestaltCore::reset() {
   state_ = initialState_;
 }
 
-void GestaltCore::runUnitTests() {
-  Value tests = unitTests_;
+void GestaltCore::runUnitTests(Value tests) {
   if (tests.type != Value::Type::List) throw std::runtime_error("runUnitTests: expected a list of tests");
 
   struct Result { std::string description; bool pass; };

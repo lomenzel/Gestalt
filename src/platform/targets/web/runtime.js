@@ -1,5 +1,3 @@
-/* ─── Gestalt Web Runtime ────────────────────────────────── */
-
 (function () {
   'use strict';
 
@@ -10,29 +8,12 @@
   var modalCancel = document.getElementById('modalCancel');
   var modalTitle = document.getElementById('modalTitle');
 
-  
-
-  /* ── Logging (console only) ──────────────────────────────── */
-
-  function log(msg) {
-    console.log('%c[Gestalt]%c ' + msg, 'color:#7c6aef;font-weight:700', 'color:inherit');
-  }
-
-  /* ── Action dispatch ─────────────────────────────────────── */
-
   window.invokeAction = function invokeAction(actionName, params) {
-    var effect;
     try {
-      effect = window.core.dispatch(actionName, params);
+      window.core.dispatch(actionName, params);
     } catch (e) {
       console.error('[Gestalt] Action error (' + actionName + '):', e);
       return;
-    }
-    log('Action: ' + actionName);
-    try {
-      executeEffect(effect);
-    } catch (e) {
-      console.error('[Gestalt] Effect error:', e);
     }
     renderView();
   };
@@ -40,14 +21,19 @@
   /* ── Effects ─────────────────────────────────────────────── */
 
   function executeEffect(effect) {
+    if (!window.core) {
+      window.pendingEffects = window.pendingEffects || [];
+      window.pendingEffects.push(effect);
+      return;
+    }
     if (!effect || !effect.id) return;
-    log('Effect: ' + effect.id);
     var handler = effectFunctions[effect.id];
     if (handler) handler(effect.params);
   }
 
+  
   var effectFunctions = {
-    noop: function () {},
+    noop: function () { },
 
     log: function (params) {
       console.log('%c[App]%c ' + params.message, 'color:#30a46c;font-weight:700', 'color:inherit');
@@ -58,10 +44,10 @@
         params.method.toUpperCase() === 'GET'
           ? undefined
           : {
-              method: params.method,
-              body: params.body,
-              headers: params.headers || {},
-            };
+            method: params.method,
+            body: params.body,
+            headers: params.headers || {},
+          };
 
       fetch(params.url, opts)
         .then(function (resp) {
@@ -91,6 +77,8 @@
       window.invokeAction(params.actionId, params.params);
     },
   };
+
+
 
   /* ── Annotation helper ───────────────────────────────────── */
 
@@ -226,6 +214,7 @@
           // If the view provided concrete params for this action, use them.
           if (a && a.params !== undefined) {
             try {
+              console.log('[Gestalt][DEBUG] Invoking action with params:', a.actionId, a.params);
               window.invokeAction(a.actionId, a.params);
             } catch (e) {
               console.error('[Gestalt] Action invoke error:', e);
@@ -233,7 +222,10 @@
             return;
           }
 
-          var fields = (window.actionParamTypes && window.actionParamTypes[a.actionId]) || [];
+          if (!window.core.actionParams || !window.core.actionParams[a.actionId]) {
+            throw new Error(`Action parameter type unknown for action: ${a.actionId}, ${window.core.actionParams[a.actionId]}`);
+          }
+          var fields = (window.core.actionParams && window.core.actionParams[a.actionId]);
 
           if (fields.length > 0) {
             openParamModal(a.actionId, fields);
@@ -253,8 +245,14 @@
       viewContainer.appendChild(actionsCard);
     }
   }
+  window.core = new window.GestaltCore(executeEffect);
+  while (window.pendingEffects && window.pendingEffects.length) {
+    var effect = window.pendingEffects.shift();
+    executeEffect(effect);
+  }
+  console.log('[Gestalt][DEBUG]', window.core.actionParams)
 
   /* ── Boot ─────────────────────────────────────────────────── */
-  log('Runtime loaded');
+  console.log('[Gestalt] Runtime loaded');
   renderView();
 })();

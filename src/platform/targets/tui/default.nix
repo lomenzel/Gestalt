@@ -6,6 +6,7 @@
   runCommand,
   ansilove,
   lib,
+  buildPackages,
 }:
 let
   libgestalt = lib.gestaltCore.cpp ir;
@@ -39,7 +40,7 @@ stdenv.mkDerivation (finalAttrs: {
         }
         ''
           mkdir -p $out
-          echo "0" | ${finalAttrs.finalPackage}/bin/${ir.name} > capture.ansi
+          echo "0" | ${stdenv.hostPlatform.emulator buildPackages} ${finalAttrs.finalPackage}/bin/${ir.name} > capture.ansi
 
           ansilove capture.ansi -o $out/screenshot.png
 

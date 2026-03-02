@@ -2,7 +2,6 @@
 (pkgs.lib.evalModules {
   modules = [
     ./buildApplication.nix
-    ./targets/cli/module.nix
     ./targets/web/module.nix
     ./targets/tui/module.nix
     ./publish.nix

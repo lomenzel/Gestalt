@@ -4,22 +4,25 @@ class GestaltCore {
     #actions;
     #view;
     #actionParams;
+    #initialEffect;
+    #effectCallback
 
-    constructor({ initialState, actions, view, actionParams }) {
-        this.#initialState = structuredClone(initialState);
-        this.#state = structuredClone(initialState);
-        this.#actions = actions;
-        this.#view = view;
-        this.#actionParams = actionParams;
-    }
-
-    reset() {
+    constructor(effectCallback) {
+        if(!effectCallback) throw new Error('Effect callback is required to initialize the application');
+        this.#initialState = '%initialState%';
         this.#state = structuredClone(this.#initialState);
+        this.#actions = '%actions%';
+        this.#view = '%view%';
+        this.#actionParams = '%actionParams%';
+        this.#initialEffect = '%initialEffect%';
+        this.#effectCallback = effectCallback;
+        this.#effectCallback(this.#initialEffect);
+        if (this.#actions == '%actions%') {
+            console.warn('No actions defined for this application');
+        }
     }
 
-
-
-    runUnitTests(tests) {
+    static runUnitTests(tests) {
         const results = tests.map(({ description, func, params, pass }) => {
             if (params === undefined) {
                 throw new Error(`Test "${description}" is missing 'params' field`);
@@ -44,6 +47,12 @@ class GestaltCore {
         if (numberFailed > 0) {
             throw new Error('Some unit tests failed');
         }
+    }
+
+    static meta = {
+        name: '%name%',
+        version: '%version%',
+        author: '%authorName%',
     }
 
     dispatch(action, params = {}) {
@@ -71,8 +80,8 @@ class GestaltCore {
         }
 
         const { state, effect } = actionFn({ state: this.#state, params });
-        this.#state = structuredClone(state);
-        return effect;
+        this.#state = state;
+        this.#effectCallback(effect);
     }
 
     get view() {
@@ -80,8 +89,15 @@ class GestaltCore {
     }
 
     get state() {
+        console.warn("[DEBUG] Accessing state directly is meant for debugging purposes. Consider using the view instead.");
         return this.#state;
+    }
+
+    get actionParams() {
+        return this.#actionParams;
     }
 
 
 }
+
+export default GestaltCore;
