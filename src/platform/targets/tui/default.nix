@@ -29,7 +29,7 @@ stdenv.mkDerivation (finalAttrs: {
     cp ./main $out/bin/${ir.name}
   '';
   meta = {
-    platforms = lib.platforms.unix;
+    #platforms = lib.platforms.unix;
   };
   passthru = {
     inherit libgestalt;

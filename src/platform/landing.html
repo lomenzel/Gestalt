@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -106,7 +107,9 @@
             margin-bottom: 4rem;
         }
 
-        .grid-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+        .grid-2 {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
 
         /* --- Cards --- */
         .card {
@@ -171,7 +174,7 @@
             border: 1px solid var(--border);
             border-radius: 1rem;
             overflow: hidden;
-            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
         }
 
         .screenshot-header {
@@ -203,28 +206,43 @@
             object-fit: cover;
             transition: transform 0.3s ease;
         }
-        
+
         .screenshot-container:hover img {
             transform: scale(1.02);
         }
+
         .screenshot-img-wrapper {
             overflow: hidden;
         }
 
         /* Icons */
-        svg { width: 1.25rem; height: 1.25rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        svg {
+            width: 1.25rem;
+            height: 1.25rem;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
     </style>
 </head>
+
 <body>
 
     <div class="container">
-        
+
         <!-- Hero Section -->
         <header class="hero">
             <h1>%apptitle%</h1>
-            <p>Access this application instantly from the web, or download standalone clients tailored for your environment.</p>
+            <p>Access this application instantly from the web, or download standalone clients tailored for your
+                environment.</p>
             <a href="./app" class="btn btn-primary">
-                <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                <svg viewBox="0 0 24 24">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
                 Launch Web App
             </a>
         </header>
@@ -232,33 +250,57 @@
         <!-- Downloads Section -->
         <section>
             <h2 class="section-title">
-                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                <svg viewBox="0 0 24 24">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
                 Downloads
             </h2>
-
-            <div class="warning-banner">
-                <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                <div>
-                    <strong>Experimental Feature:</strong> 
-                    Download functionality is currently in testing and might not work as expected in all environments.
-                </div>
-            </div>
 
             <div class="grid grid-2">
                 <div class="card">
                     <h3 class="card-title">Standalone Web</h3>
-                    <p class="card-text">A bundled HTML version of the application that runs locally in your browser without a server.</p>
+                    <p class="card-text">A bundled HTML version of the application that runs locally in your browser
+                        without a server.</p>
                     <a href="./download/%appname%.zip" class="btn btn-secondary">
                         Download .zip
                     </a>
                 </div>
+                <!-- <div class="card">
+                    <h3 class="card-title">Windows TUI</h3>
+                    <p class="card-text">Windows version of the tui</p>
+                    <a href="./download/%appname%-tui-mingwW64.exe" class="btn btn-secondary">
+                        Download (64-bit)
+                    </a>
+                    <a href="./download/%appname%-tui-mingwW32.exe" class="btn btn-secondary">
+                        Download (32-bit)
+                    </a>
+                </div> -->
+
 
                 <div class="card">
                     <h3 class="card-title">Linux Terminal (TUI)</h3>
-                    <p class="card-text">A lightweight native executable for Linux terminal environments. Requires no dependencies.</p>
-                    <a href="./download/%appname%.AppImage" class="btn btn-secondary">
-                        Download AppImage
+                    <p class="card-text">A lightweight native executable for Linux terminal environments. Requires no
+                        dependencies.</p>
+                    <a href="./download/%appname%-tui-gnu64.AppImage" class="btn btn-secondary">
+                        AppImage (x86_64)
                     </a>
+                    <a href="./download/%appname%-tui-armv7l-hf-multiplatform.AppImage" class="btn btn-secondary">
+                        AppImage (armv7l)
+                    </a>
+                  <!--   <a href="./download/%appname%-tui-gnu32.AppImage" class="btn btn-secondary">
+                        AppImage (i686)
+                    </a>
+                    <a href="./download/%appname%-tui-aarch64-multiplatform.AppImage" class="btn btn-secondary">
+                        AppImage (aarch64)
+                    </a>
+                    <a href="./download/%appname%-tui-riscv64.AppImage" class="btn btn-secondary">
+                        AppImage (riscv64)
+                    </a>
+                    <a href="./download/%appname%-tui-ppc64.AppImage" class="btn btn-secondary">
+                        AppImage (ppc64)
+                    </a> -->
                 </div>
             </div>
         </section>
@@ -266,7 +308,11 @@
         <!-- Screenshots Section -->
         <section>
             <h2 class="section-title">
-                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                <svg viewBox="0 0 24 24">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
                 Gallery
             </h2>
 
@@ -292,4 +338,5 @@
     </div>
 
 </body>
+
 </html>
