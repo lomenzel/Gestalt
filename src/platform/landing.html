@@ -283,27 +283,18 @@
                     <h3 class="card-title">Linux Terminal (TUI)</h3>
                     <p class="card-text">A lightweight native executable for Linux terminal environments. Requires no
                         dependencies.</p>
-                    <a href="./download/%appname%-tui-gnu64.AppImage" class="btn btn-secondary">
-                        AppImage (x86_64)
-                    </a>
-                    <a href="./download/%appname%-tui-armv7l-hf-multiplatform.AppImage" class="btn btn-secondary">
-                        AppImage (armv7l)
-                    </a>
-                     <a href="./download/%appname%-tui-gnu32.AppImage" class="btn btn-secondary">
-                        AppImage (i686)
-                    </a>
-                    <a href="./download/%appname%-tui-aarch64-multiplatform.AppImage" class="btn btn-secondary">
-                        AppImage (aarch64)
-                    </a>
-                    <a href="./download/%appname%-tui-riscv64.AppImage" class="btn btn-secondary">
-                        AppImage (riscv64)
-                    </a>
-                    <a href="./download/%appname%-tui-ppc64.AppImage" class="btn btn-secondary">
-                        AppImage (ppc64)
-                    </a> 
-                    <a href="./download/%appname%-tui-ppc32.AppImage" class="btn btn-secondary">
-                        AppImage (ppc32)
-                    </a>
+                    <div style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center;">
+                        <label for="arch-select" style="color:var(--text-muted);font-weight:600;margin-right:0.5rem;">Architecture:</label>
+                        <select id="arch-select" style="padding:0.6rem 0.9rem;border-radius:0.5rem;background:transparent;color:var(--text);border:1px solid var(--border);">
+                            <option value="tui-gnu64.AppImage">x86_64</option>
+                            <option value="tui-armv7l-hf-multiplatform.AppImage">armv7l</option>
+                            <option value="tui-gnu32.AppImage">i686</option>
+                            <option value="tui-aarch64-multiplatform.AppImage">aarch64</option>
+                            <option value="tui-riscv64.AppImage">riscv64</option>
+                            <option value="tui-ppc64.AppImage">ppc64</option>
+                        </select>
+                        <a id="arch-download" href="./download/%appname%-tui-gnu64.AppImage" class="btn btn-secondary">Download AppImage</a>
+                    </div>
                 </div>
             </div>
         </section>
@@ -339,6 +330,20 @@
         </section>
 
     </div>
+
+    <script>
+        (function () {
+            var select = document.getElementById('arch-select');
+            var btn = document.getElementById('arch-download');
+            if (!select || !btn) return;
+            function update() {
+                var val = select.value || 'tui-gnu64.AppImage';
+                btn.href = './download/%appname%-' + val;
+            }
+            select.addEventListener('change', update);
+            update();
+        })();
+    </script>
 
 </body>
 

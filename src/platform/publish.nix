@@ -63,7 +63,6 @@
                   "aarch64-multiplatform"
                   "riscv64"
                   "ppc64"
-                  "ppc32"
                 ])
             )}
             ${builtins.concatStringsSep "\n" (
