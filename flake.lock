@@ -105,8 +105,12 @@
     "nix-appimage": {
       "inputs": {
         "flake-compat": "flake-compat",
-        "flake-utils": "flake-utils",
-        "nixpkgs": "nixpkgs"
+        "flake-utils": [
+          "flake-utils"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
       },
       "locked": {
         "lastModified": 1757920913,
@@ -127,7 +131,7 @@
         "flake-compat": "flake-compat_2",
         "flake-parts": "flake-parts",
         "git-hooks-nix": "git-hooks-nix",
-        "nixpkgs": "nixpkgs_2",
+        "nixpkgs": "nixpkgs",
         "nixpkgs-23-11": "nixpkgs-23-11",
         "nixpkgs-regression": "nixpkgs-regression"
       },
@@ -147,18 +151,15 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1745997950,
-        "narHash": "sha256-FklMkU+bPPx0L3i6pdrw65js05VO9He3DTeKguX9GQY=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "cf3ffa5d140899101f1deb3f4d16b1a1aa2de849",
-        "type": "github"
+        "lastModified": 1771043024,
+        "narHash": "sha256-WoiezqWJQ3OHILah+p6rzNXdJceEAmAhyDFZFZ6pZzY=",
+        "rev": "3aadb7ca9eac2891d52a9dec199d9580a6e2bf44",
+        "type": "tarball",
+        "url": "https://releases.nixos.org/nixos/25.11/nixos-25.11.5960.3aadb7ca9eac/nixexprs.tar.xz"
       },
       "original": {
-        "owner": "nixos",
-        "ref": "nixos-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
+        "type": "tarball",
+        "url": "https://channels.nixos.org/nixos-25.11/nixexprs.tar.xz"
       }
     },
     "nixpkgs-23-11": {
@@ -195,19 +196,6 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1771043024,
-        "narHash": "sha256-WoiezqWJQ3OHILah+p6rzNXdJceEAmAhyDFZFZ6pZzY=",
-        "rev": "3aadb7ca9eac2891d52a9dec199d9580a6e2bf44",
-        "type": "tarball",
-        "url": "https://releases.nixos.org/nixos/25.11/nixos-25.11.5960.3aadb7ca9eac/nixexprs.tar.xz"
-      },
-      "original": {
-        "type": "tarball",
-        "url": "https://channels.nixos.org/nixos-25.11/nixexprs.tar.xz"
-      }
-    },
-    "nixpkgs_3": {
-      "locked": {
         "lastModified": 1772674223,
         "narHash": "sha256-/suKbHSaSmuC9UY7G0VRQ3aO+QKqxAQPQ19wG7QNkF8=",
         "owner": "NixOS",
@@ -224,12 +212,29 @@
     },
     "root": {
       "inputs": {
+        "flake-utils": "flake-utils",
         "nix-appimage": "nix-appimage",
         "nixFork": "nixFork",
-        "nixpkgs": "nixpkgs_3"
+        "nixpkgs": "nixpkgs_2",
+        "systems": "systems_2"
       }
     },
     "systems": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
+    "systems_2": {
       "locked": {
         "lastModified": 1681028828,
         "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",

@@ -25,6 +25,9 @@
             pkgs.callPackage ./upstreamCompat.nix {
               nixFork = inputs.nixFork;
               nixpkgs = inputs.nixpkgs;
+              nix-appimage = inputs.nix-appimage;
+              flake-utils = inputs.flake-utils;
+              systems = inputs.systems;
               inherit
                 src
                 mainFile

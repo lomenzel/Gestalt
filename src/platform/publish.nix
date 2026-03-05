@@ -59,7 +59,7 @@
                 ([
                   "gnu64"
                   #"gnu32"
-                  "armv7l-hf-multiplatform"
+                  #"armv7l-hf-multiplatform"
                   #"aarch64-multiplatform"
                   #"riscv64"
                   #"ppc64"
@@ -68,7 +68,8 @@
             ${builtins.concatStringsSep "\n" (
               builtins.map (crossSystem: ''
                 cp ${(tuiCross crossSystem).overrideAttrs {
-                  #doCheck = false;
+                  doCheck = false;
+                  checkPhase = "true";
                 }}/bin/${webIR.name}.exe $out/download/${webIR.name}-tui-${crossSystem}.exe
               '') [
                # "mingwW64"

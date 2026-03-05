@@ -3,6 +3,10 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixFork.url = "github:lomenzel/nix";
     nix-appimage.url = "github:ralismark/nix-appimage";
+    nix-appimage.inputs.nixpkgs.follows = "nixpkgs";
+    nix-appimage.inputs.flake-utils.follows = "flake-utils";
+    flake-utils.url = "github:numtide/flake-utils";
+    systems.url = "github:nix-systems/default";
   };
 
   outputs =
