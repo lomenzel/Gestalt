@@ -58,11 +58,12 @@
                 '')
                 ([
                   "gnu64"
-                  #"gnu32"
-                  #"armv7l-hf-multiplatform"
-                  #"aarch64-multiplatform"
-                  #"riscv64"
-                  #"ppc64"
+                  "gnu32"
+                  "armv7l-hf-multiplatform"
+                  "aarch64-multiplatform"
+                  "riscv64"
+                  "ppc64"
+                  "ppc32"
                 ])
             )}
             ${builtins.concatStringsSep "\n" (
