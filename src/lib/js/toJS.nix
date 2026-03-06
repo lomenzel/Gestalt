@@ -387,7 +387,19 @@ let
     length = "e=>e.length";
     mul = "a=>b=>(a * b)";
     hasAttr = "attr=>s=>Object.prototype.hasOwnProperty.call(s, attr)";
-    div = "a=>b=>(a / b)";
+    div = ''
+      a=>b=>{
+        if (typeof a !== "number" || typeof b !== "number") {
+          throw new Error("gestalt_primop_div: both arguments must be numbers");
+        }
+        if (Number.isInteger(a) && Number.isInteger(b)) {
+          if (b === 0) throw new Error("gestalt_primop_div: division by zero");
+          return Math.trunc(a / b);
+        }
+        if (b === 0) throw new Error("gestalt_primop_div: division by zero");
+        return (a / b);
+      }
+    '';
     any = "func=>list=>list.some(func)";
     warn = ''
       msg=>val=>{
