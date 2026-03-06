@@ -141,7 +141,7 @@
 
           # 2. Upload to IPFS
           # ipfs add pins the content locally by default.
-          if ! cid=$(${pkgs.kubo}/bin/ipfs add --cid-version=1 $IPFS_FLAGS -r ${full} | tail -n1); then
+          if ! cid=$(${pkgs.kubo}/bin/ipfs add --cid-version=1 $IPFS_FLAGS -r --quiet ${full} | tail -n1); then
             echo "" >&2
             echo -e "\033[31m[Error] Failed to publish to IPFS\033[0m" >&2
             echo "This framework uses IPFS (InterPlanetary File System) to host and publish your application." >&2
