@@ -1,7 +1,15 @@
 { lib, target, ... }:
 
 let
- inherit (import ./lib.nix {inherit lib;}) possibleParts;
+  inherit (import ./lib.nix { inherit lib; }) possibleParts;
+
+  factorial = n: if n == 0 then 1 else n * factorial (n - 1);
+
+  chose = n: r: (factorial n) / ((factorial r) * (factorial (n - r)));
+
+  numberOfPracticeParts = { start, end }: (chose (end - start + 1) 2) + (end - start + 1);
+
+  percentageDone = done: practiceRange: ((builtins.length done - 1) * 1.0) / numberOfPracticeParts practiceRange;
 in
 {
 
@@ -14,7 +22,8 @@ in
   };
 
   showcaseState = {
-    done = [];
+    # only used for percentage real values dont matter currently
+    done = [ 2 3 4 23 34 24 ];
     practiceRange = {
       start = 1;
       end = 5;
@@ -32,7 +41,27 @@ in
           content = state.message;
           annotations = [ target.capabilities.annotations.ui.important ];
         }
-      ];
+      ]
+      ++ (
+        if builtins.typeOf state.task != "string" then
+          [
+            {
+              content = "Current Practice Range: from ${builtins.toString state.practiceRange.start} to ${builtins.toString state.practiceRange.end}";
+              annotations = [ ];
+            }
+            {
+              content = "Progress: ${builtins.substring 0 4 (builtins.toString 
+               (percentageDone state.done state.practiceRange * 100))
+              }%";
+              annotations = [ ];
+              # better would be:
+              # content = percentageDone state.done state.practiceRange
+              # annotations = [ target.capabilities.annotations.ui.progressBar];
+            }
+          ]
+        else
+          [ ]
+      );
       actions = [
         {
           content = "Start new Practice Session";
@@ -71,6 +100,7 @@ in
               else
                 "from ${builtins.toString state.task.start} to ${builtins.toString state.task.end}"
             }";
+
       }
 
     )
@@ -84,7 +114,6 @@ in
           params,
         }:
         {
-          # todo
           state = {
             done = [ ];
             task = "initializing";
@@ -184,6 +213,6 @@ in
 
   title = "Practice Helper (Gestalt Example)";
   name = "practice-helper";
-  version = "0.0.1";
+  version = "0.0.2";
   author.name = "Leonard Menzel";
 }

@@ -76,6 +76,10 @@
             src = ./examples/minimal;
           };
 
+          performance-metrics = import ./benchmarks {
+            inherit pkgs;
+          };
+
         }
       );
     };
