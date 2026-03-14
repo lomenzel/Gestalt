@@ -105,7 +105,7 @@
           return 0;
         }
         EOF
-      
+
         $CXX -O3 unitTests.cpp libgestalt.a -o unitTests
 
         echo "Running unit tests..."

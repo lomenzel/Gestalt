@@ -51,14 +51,14 @@
         |>
           lib.replaceStrings
             [
-              "'%initialState%'"
-              "'%actions%'"
-              "'%view%'"
-              "'%actionParams%'"
-              "'%initialEffect%'"
-              "'%name%'"
-              "'%version%'"
-              "'%authorName%'"
+              "\"%initialState%\""
+              "\"%actions%\""
+              "\"%view%\""
+              "\"%actionParams%\""
+              "\"%initialEffect%\""
+              "\"%name%\""
+              "\"%version%\""
+              "\"%authorName%\""
             ]
             (
               lib.map config.lib.toJS (

@@ -1,4 +1,9 @@
-{ lib, config, target, ... }:
+{
+  lib,
+  config,
+  target,
+  ...
+}:
 {
   options = {
     name = lib.mkOption {
@@ -92,16 +97,21 @@
                 inherit (test) description pass;
                 func =
                   initialState:
-                  builtins.foldl' (runStep) {
-                    state = initialState;
-                    emittedEffects = [ ];
-                    states = [ initialState ];
-                  } (test.steps ++ (test.final.effectMocks.${initialEffect.id} {
-                    effect = initialEffect;
-                    emittedEffects = [];
-                    state = initialState;
-                    states = [ initialState ];
-                  }))
+                  builtins.foldl' (runStep)
+                    {
+                      state = initialState;
+                      emittedEffects = [ ];
+                      states = [ initialState ];
+                    }
+                    (
+                      test.steps
+                      ++ (test.final.effectMocks.${initialEffect.id} {
+                        effect = initialEffect;
+                        emittedEffects = [ ];
+                        state = initialState;
+                        states = [ initialState ];
+                      })
+                    )
                   |> (
                     res:
                     res
@@ -129,13 +139,16 @@
           builtins.mapAttrs (
             _: action:
             let
-            af_ =  if builtins.typeOf action == "lambda" then action else action.function;
-            af = {state, params}@p: {
-              inherit state;
-              effect = target.capabilities.effects.noop;
-            } // (af_ p);
+              af_ = if builtins.typeOf action == "lambda" then action else action.function;
+              af =
+                { state, params }@p:
+                {
+                  inherit state;
+                  effect = target.capabilities.effects.noop;
+                }
+                // (af_ p);
             in
-            (if builtins.typeOf action == "lambda" then {} else action)
+            (if builtins.typeOf action == "lambda" then { } else action)
             // {
               function =
                 { state, params }:

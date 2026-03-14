@@ -7,22 +7,32 @@
     nix-appimage.inputs.flake-utils.follows = "flake-utils";
     flake-utils.url = "github:numtide/flake-utils";
     systems.url = "github:nix-systems/default";
+    treefmt-nix.url = "github:numtide/treefmt-nix";
+    treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
     {
       self,
       nixpkgs,
+      treefmt-nix,
       ...
     }@inputs:
+    let
+      eachSystem = nixpkgs.lib.genAttrs nixpkgs.lib.systems.flakeExposed;
+      treefmtEval = eachSystem (
+        system: treefmt-nix.lib.evalModule (import nixpkgs { inherit system; }) ./treefmt.nix
+      );
+    in
     {
       overlays.default =
         final: prev:
         let
-          nix-appimage-packages = (import inputs.nix-appimage.inputs.nixpkgs {
-            localSystem = final.stdenv.buildPlatform;
-            crossSystem = final.stdenv.hostPlatform;
-          }).pkgsStatic;
+          nix-appimage-packages =
+            (import inputs.nix-appimage.inputs.nixpkgs {
+              localSystem = final.stdenv.buildPlatform;
+              crossSystem = final.stdenv.hostPlatform;
+            }).pkgsStatic;
         in
         {
           lib =
@@ -49,7 +59,7 @@
         };
 
       # example usage
-      packages = nixpkgs.lib.genAttrs nixpkgs.lib.systems.flakeExposed (
+      packages = eachSystem (
         system:
         let
           pkgs = (
@@ -80,6 +90,19 @@
             inherit pkgs;
           };
 
+        }
+      );
+
+      # for `nix fmt`
+      formatter = eachSystem (system: treefmtEval.${system}.config.build.wrapper);
+      # for `nix flake check`
+
+      checks = nixpkgs.lib.genAttrs nixpkgs.lib.systems.flakeExposed (
+        system:
+        self.packages.${system}
+        // {
+          fullPublishExample = self.packages.${system}.practiceHelper.publish;
+          fmt = treefmtEval.${system}.config.build.check self;
         }
       );
     };

@@ -9,7 +9,8 @@ let
 
   numberOfPracticeParts = { start, end }: (chose (end - start + 1) 2) + (end - start + 1);
 
-  percentageDone = done: practiceRange: ((builtins.length done - 1) * 1.0) / numberOfPracticeParts practiceRange;
+  percentageDone =
+    done: practiceRange: ((builtins.length done - 1) * 1.0) / numberOfPracticeParts practiceRange;
 in
 {
 
@@ -23,7 +24,14 @@ in
 
   showcaseState = {
     # only used for percentage real values dont matter currently
-    done = [ 2 3 4 23 34 24 ];
+    done = [
+      2
+      3
+      4
+      23
+      34
+      24
+    ];
     practiceRange = {
       start = 1;
       end = 5;
@@ -50,8 +58,8 @@ in
               annotations = [ ];
             }
             {
-              content = "Progress: ${builtins.substring 0 4 (builtins.toString 
-               (percentageDone state.done state.practiceRange * 100))
+              content = "Progress: ${
+                builtins.substring 0 4 (builtins.toString (percentageDone state.done state.practiceRange * 100))
               }%";
               annotations = [ ];
               # better would be:

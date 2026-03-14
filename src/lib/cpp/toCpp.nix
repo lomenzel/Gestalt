@@ -99,7 +99,7 @@ let
           paramBinding =
             (
               if ast.value.arguments.identifier != null then
-                "Value ${ sanitizeVarName ast.value.arguments.identifier} = __gestalt_param;\n"
+                "Value ${sanitizeVarName ast.value.arguments.identifier} = __gestalt_param;\n"
               else
                 ""
             )
@@ -110,16 +110,16 @@ let
                     param:
                     if builtins.hasAttr "defaultExpr" param then
                       ''
-                        Value ${ sanitizeVarName param.name};
+                        Value ${sanitizeVarName param.name};
                         try {
-                          ${ sanitizeVarName param.name} = __gestalt_param["${ sanitizeVarName param.name}"];
+                          ${sanitizeVarName param.name} = __gestalt_param["${sanitizeVarName param.name}"];
                         } catch(...) {
-                          ${ sanitizeVarName param.name} = ${(ASTtoCpp param.defaultExpr reifiedFunctions).text};                    
+                          ${sanitizeVarName param.name} = ${(ASTtoCpp param.defaultExpr reifiedFunctions).text};                    
                         }
                       ''
                     else
                       ''
-                        Value ${ sanitizeVarName param.name} = __gestalt_param["${ sanitizeVarName param.name}"];
+                        Value ${sanitizeVarName param.name} = __gestalt_param["${sanitizeVarName param.name}"];
                       ''
                   ) ast.value.arguments.formals
                 )

@@ -1,0 +1,6 @@
+stages:
+  - check
+check:
+  stage: check
+  script:
+    - nix flake check --extra-experimental-features 'nix-command flakes pipe-operators'

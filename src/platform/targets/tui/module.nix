@@ -1,4 +1,5 @@
-{pkgs, lib, ...}: {
+{ pkgs, lib, ... }:
+{
   gestaltPlatform.targets.tui = {
     capabilities = import ./capabilities.nix;
 

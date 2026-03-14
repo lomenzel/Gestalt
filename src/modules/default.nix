@@ -1,4 +1,9 @@
-{ lib, config, target, ... }:
+{
+  lib,
+  config,
+  target,
+  ...
+}:
 let
   # random implementation stolen from glibc
   m = 2147483648;
@@ -31,7 +36,7 @@ in
     };
     actions = lib.mkOption {
       type = lib.types.attrs;
-      default = {};
+      default = { };
     };
     types = lib.mkOption {
       type = lib.types.attrs;
@@ -134,11 +139,19 @@ in
                 invokeAction =
                   { effect, ... }:
                   [
-                    ({
-                      inherit (effect.params) actionId;
-                    } // (if builtins.hasAttr "params" effect.params then {
-                      params = effect.params.params;
-                    } else {}))
+                    (
+                      {
+                        inherit (effect.params) actionId;
+                      }
+                      // (
+                        if builtins.hasAttr "params" effect.params then
+                          {
+                            params = effect.params.params;
+                          }
+                        else
+                          { }
+                      )
+                    )
                   ];
                 random =
                   { effect, emittedEffects, ... }:
@@ -164,17 +177,21 @@ in
     };
     view = lib.mkOption {
       type = lib.types.listOf lib.types.raw;
-      default = [(
-        state: {
-          elements = [{
-            content = "state: ${builtins.toJSON state}";
-          }];
-          actions = builtins.attrNames config.actions |> builtins.map (actionId: {
-            content = actionId;
-            actionId = actionId;
-          });
-        }
-      )];
+      default = [
+        (state: {
+          elements = [
+            {
+              content = "state: ${builtins.toJSON state}";
+            }
+          ];
+          actions =
+            builtins.attrNames config.actions
+            |> builtins.map (actionId: {
+              content = actionId;
+              actionId = actionId;
+            });
+        })
+      ];
       description = ''
         function taking state and returning 
         {

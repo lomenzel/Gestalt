@@ -76,10 +76,10 @@ The flake exports:
 
 ### Build and run examples
 
-
 ```bash
 nix run github:lomenzel/gestalt#counter.extraTargets.tui
 ```
+
 > note: gestalt uses a patched version of nix to be able to compile nix functions to c++ or js. So you either need to run it with the patched version `nix run github:lomenzel/nix -- build github:lomenzel/gestalt#counter`, or you need to have the `recursive-nix` experimental feature enabled for gestalt to automatically switch to upstream nix compatibility mode
 
 ## Nix fork vs upstream Nix

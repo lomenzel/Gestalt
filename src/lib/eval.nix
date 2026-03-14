@@ -2,9 +2,15 @@
 
 let
   eval =
-    { _expr ? null, value ? throw "value is required", name ? "", ... }@input:
-    if _expr == null then throw input else
-    if _expr == "literal" || _expr == "attrName" then
+    {
+      _expr ? null,
+      value ? throw "value is required",
+      name ? "",
+      ...
+    }@input:
+    if _expr == null then
+      throw input
+    else if _expr == "literal" || _expr == "attrName" then
       {
         success = true;
         inherit value;
@@ -231,7 +237,10 @@ let
           value = /. + value;
         }
     else if _expr == "primop" || _expr == "primopApp" then
-      { success = false; value = null;}
+      {
+        success = false;
+        value = null;
+      }
     else
       throw ("unknown _expr handed to eval: " + _expr);
 in

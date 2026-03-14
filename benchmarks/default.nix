@@ -4,31 +4,36 @@ let
   inherit (pkgs) lib;
 
   # ── Benchmark functions defined once in Nix ─────────────────────────
-  fibonacci = n:
-    if n < 2 then n
-    else fibonacci (n - 1) + fibonacci (n - 2);
+  fibonacci = n: if n < 2 then n else fibonacci (n - 1) + fibonacci (n - 2);
 
-  factorial = n:
-    if n < 2 then 1
-    else n * factorial (n - 1);
+  factorial = n: if n < 2 then 1 else n * factorial (n - 1);
 
-  ackermann = m: n:
-    if m == 0 then n + 1
-    else if n == 0 then ackermann (m - 1) 1
-    else ackermann (m - 1) (ackermann m (n - 1));
+  ackermann =
+    m: n:
+    if m == 0 then
+      n + 1
+    else if n == 0 then
+      ackermann (m - 1) 1
+    else
+      ackermann (m - 1) (ackermann m (n - 1));
 
   # ── Translate at Nix-eval time ──────────────────────────────────────
-  fibCpp  = pkgs.lib.toCpp fibonacci;
-  fibJS   = pkgs.lib.toJS  fibonacci;
+  fibCpp = pkgs.lib.toCpp fibonacci;
+  fibJS = pkgs.lib.toJS fibonacci;
   factCpp = pkgs.lib.toCpp factorial;
-  factJS  = pkgs.lib.toJS  factorial;
-  ackCpp  = pkgs.lib.toCpp ackermann;
-  ackJS   = pkgs.lib.toJS  ackermann;
+  factJS = pkgs.lib.toJS factorial;
+  ackCpp = pkgs.lib.toCpp ackermann;
+  ackJS = pkgs.lib.toJS ackermann;
 
   coreHpp = ../src/lib/cpp/core.hpp;
 
   # ── Helpers to generate translated source files ─────────────────────
-  mkTranslatedCppSrc = { name, translatedCode, call }:
+  mkTranslatedCppSrc =
+    {
+      name,
+      translatedCode,
+      call,
+    }:
     pkgs.writeText "translated-${name}.cpp" ''
       #include "core.hpp"
       #include <chrono>
@@ -50,7 +55,12 @@ let
       }
     '';
 
-  mkTranslatedJsSrc = { name, translatedCode, call }:
+  mkTranslatedJsSrc =
+    {
+      name,
+      translatedCode,
+      call,
+    }:
     pkgs.writeText "translated-${name}.js" ''
       const iterations = parseInt(process.argv[2]) || 10;
       const func = ${translatedCode};
@@ -63,17 +73,41 @@ let
       console.log(Math.round((end - start) * 1000));
     '';
 
-  translatedFibCpp  = mkTranslatedCppSrc { name = "fibonacci";  translatedCode = fibCpp;  call = "func(Value::fromInt(30))"; };
-  translatedFactCpp = mkTranslatedCppSrc { name = "factorial";  translatedCode = factCpp; call = "func(Value::fromInt(20))"; };
-  translatedAckCpp  = mkTranslatedCppSrc { name = "ackermann";  translatedCode = ackCpp;  call = "func(Value::fromInt(3))(Value::fromInt(7))"; };
+  translatedFibCpp = mkTranslatedCppSrc {
+    name = "fibonacci";
+    translatedCode = fibCpp;
+    call = "func(Value::fromInt(30))";
+  };
+  translatedFactCpp = mkTranslatedCppSrc {
+    name = "factorial";
+    translatedCode = factCpp;
+    call = "func(Value::fromInt(20))";
+  };
+  translatedAckCpp = mkTranslatedCppSrc {
+    name = "ackermann";
+    translatedCode = ackCpp;
+    call = "func(Value::fromInt(3))(Value::fromInt(7))";
+  };
 
-  translatedFibJS   = mkTranslatedJsSrc  { name = "fibonacci";  translatedCode = fibJS;   call = "func(30)"; };
-  translatedFactJS  = mkTranslatedJsSrc  { name = "factorial";  translatedCode = factJS;  call = "func(20)"; };
-  translatedAckJS   = mkTranslatedJsSrc  { name = "ackermann";  translatedCode = ackJS;   call = "func(3)(7)"; };
+  translatedFibJS = mkTranslatedJsSrc {
+    name = "fibonacci";
+    translatedCode = fibJS;
+    call = "func(30)";
+  };
+  translatedFactJS = mkTranslatedJsSrc {
+    name = "factorial";
+    translatedCode = factJS;
+    call = "func(20)";
+  };
+  translatedAckJS = mkTranslatedJsSrc {
+    name = "ackermann";
+    translatedCode = ackJS;
+    call = "func(3)(7)";
+  };
 
-  nixExprFib  = "let fib = n: if n < 2 then n else fib (n - 1) + fib (n - 2); in fib 30";
+  nixExprFib = "let fib = n: if n < 2 then n else fib (n - 1) + fib (n - 2); in fib 30";
   nixExprFact = "let fact = n: if n < 2 then 1 else n * fact (n - 1); in fact 20";
-  nixExprAck  = "let ack = m: n: if m == 0 then n + 1 else if n == 0 then ack (m - 1) 1 else ack (m - 1) (ack m (n - 1)); in ack 3 7";
+  nixExprAck = "let ack = m: n: if m == 0 then n + 1 else if n == 0 then ack (m - 1) 1 else ack (m - 1) (ack m (n - 1)); in ack 3 7";
 
   RUNS = "5";
 

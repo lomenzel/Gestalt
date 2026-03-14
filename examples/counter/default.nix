@@ -153,15 +153,19 @@ in
       };
     };
 
-    save = { state, ...}: {
-      inherit state;
-      effect = Store.set "counter" state.counter;
-    };
+    save =
+      { state, ... }:
+      {
+        inherit state;
+        effect = Store.set "counter" state.counter;
+      };
 
-    restore = { state, ... }: {
-      inherit state;
-      effect = Store.get "counter" "handleReadFromStore";
-    };
+    restore =
+      { state, ... }:
+      {
+        inherit state;
+        effect = Store.get "counter" "handleReadFromStore";
+      };
 
     incrementBy = {
       function =

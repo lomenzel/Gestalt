@@ -1,4 +1,6 @@
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -28,8 +30,9 @@ html {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto,
-    'Helvetica Neue', Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
@@ -134,8 +137,8 @@ body {
 }
 
 .view-element.code {
-  font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', 'Cascadia Code',
-    monospace;
+  font-family:
+    "SF Mono", "Fira Code", "JetBrains Mono", "Cascadia Code", monospace;
   background: var(--accent-glow);
   padding: 8px 12px;
   border-radius: var(--radius-sm);
@@ -179,7 +182,7 @@ body {
 }
 
 .action-btn::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background: white;
@@ -329,7 +332,9 @@ body {
   font-size: 0.85rem;
   font-family: inherit;
   outline: none;
-  transition: border-color var(--transition), box-shadow var(--transition);
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition);
 }
 
 .modal-field input:focus {

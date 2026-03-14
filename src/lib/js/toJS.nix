@@ -1,6 +1,6 @@
 { config, lib, ... }:
 let
-  jsEquals = builtins.readFile ./equals.js;
+  jsEquals = builtins.readFile ./equals.js |> lib.removeSuffix ";\n";
 
   toJS' =
     nixExpr: reifiedFunctions:

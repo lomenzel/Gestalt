@@ -53,7 +53,13 @@
           extraTargets =
             old.passthru.extraTargets or { }
             // (lib.mapAttrs (
-              name: target: target.buildApplication (lib.mkGestaltIR { inherit target ; modules = modules'; })
+              name: target:
+              target.buildApplication (
+                lib.mkGestaltIR {
+                  inherit target;
+                  modules = modules';
+                }
+              )
             ) extraTargets);
           publish = config.gestaltPlatform.publish modules';
         };
