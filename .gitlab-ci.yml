@@ -2,5 +2,7 @@ stages:
   - check
 check:
   stage: check
+  tags:
+    - nix
   script:
-    - nix flake check --extra-experimental-features 'nix-command flakes pipe-operators'
+    - nix run github:lomenzel/nix --extra-experimental-features 'nix-command flakes pipe-operators' -- flake check --extra-experimental-features 'nix-command flakes pipe-operators'

@@ -6,7 +6,6 @@ let
     nixExpr: reifiedFunctions:
     if
       builtins.elem (builtins.typeOf nixExpr) [
-        "int"
         "float"
         "string"
         "bool"
@@ -15,6 +14,11 @@ let
     then
       {
         text = builtins.toJSON nixExpr;
+        inherit reifiedFunctions;
+      }
+    else if builtins.typeOf nixExpr == "int" then
+      {
+        text = "${builtins.toJSON nixExpr}n";
         inherit reifiedFunctions;
       }
     else if builtins.typeOf nixExpr == "list" then
@@ -92,12 +96,20 @@ let
                   ""
               }${
                 if builtins.hasAttr "formals" ast.value.arguments then
-                  (lib.concatMapStringsSep "\n" (formal: ''
-                    const ${formal.name} = __gestalt_param.${formal.name};
-                    if (${formal.name} === undefined) {
-                      throw new Error("GestaltCore::Value: Field '${formal.name}' not found");
-                    }
-                  '') ast.value.arguments.formals)
+                  (lib.concatMapStringsSep "\n" (
+                    formal:
+                    if builtins.hasAttr "defaultExpr" formal then
+                      ''
+                        const ${formal.name} = __gestalt_param.${formal.name} !== undefined ? __gestalt_param.${formal.name} : ${(ASTtoJS formal.defaultExpr reifiedFunctions).text};
+                      ''
+                    else
+                      ''
+                        const ${formal.name} = __gestalt_param.${formal.name};
+                        if (${formal.name} === undefined) {
+                          throw new Error("GestaltCore::Value: Field '${formal.name}' not found");
+                        }
+                      ''
+                  ) ast.value.arguments.formals)
                   + (
                     if builtins.hasAttr "ellipsis" ast.value.arguments && ast.value.arguments.ellipsis == false then
                       ''
@@ -146,7 +158,24 @@ let
         in
         {
           text = ''
-            (${lib.concatStringsSep " + " elements.value})
+            ((()=>{
+              return [${lib.concatStringsSep "," elements.value}].reduce(
+                (acc, curr) => {
+                  if (
+                    (typeof acc === "bigint" && typeof curr === "bigint")
+                    || (typeof acc === "number" && typeof curr === "number")
+                    || (typeof acc === "string" && typeof curr === "string")
+                  )
+                    return acc + curr;
+                  if (
+                    (typeof acc == "bigint" && typeof curr === "number")
+                    || (typeof acc === "number" && typeof curr === "bigint")
+                  )
+                    return Number(acc) + Number(curr);
+                  throw new Error("+ operator or ''${} in strings requires all operators to be strings or all to be numbers")
+                }
+              );
+            })())
           '';
           inherit reifiedFunctions;
         }
@@ -340,15 +369,28 @@ let
         throw "Unsupported AST node in ASTtoJS: ${ast._expr}";
 
   primops = {
-    sub = "a=>b=>(a - b)";
+    sub = ''
+      a=>b=>{
+        if (
+          (typeof a === "bigint" && typeof b === "bigint")
+          || (typeof a === "number" && typeof b === "number")
+        )
+          return a - b;
+        if (
+          (typeof a == "bigint" && typeof b === "number")
+          || (typeof a === "number" && typeof b === "bigint")
+        )
+          return Number(a) - Number(b);
+        throw new Error("only can sub numbers")
+      }'';
     lessThan = "a=>b=>(a < b)";
     elemAt = ''
       list=>index=>{
-        if (list.length < index)
+        if (list.length < Number(index))
           throw new Error("index out of bounds");
-        if (typeof index !== "number")
-          throw new Error("index has to be a number");
-        return list.at(index);
+        if (typeof index !== "bigint")
+          throw new Error("index has to be an integer");
+        return list.at(Number(index));
       }
     '';
     filter = "func=>list=>list.filter(func)";
@@ -357,7 +399,7 @@ let
     concatMap = "func=>list=>list.flatMap(func)";
     map = "func=>list=>list.map(func)";
     # todo negative count should throw
-    genList = "func=>count=>Array.from({ length: count }, (_, i) => func(i))";
+    genList = "func=>count=>Array.from({ length: Number(count) }, (_, i) => func(i))";
     foldl' = "op=>acc=>list=>list.reduce((acc, curr)=>op(acc)(curr), acc)";
     typeOf = ''
       e=>{
@@ -365,8 +407,8 @@ let
         const t = typeof e;
         if (t === "boolean") return "bool";
         if (t === "string") return "string";
-        if (t === "number")
-          return Number.isInteger(e) ? "int" : "float";
+        if (t === "number") return "float";
+        if (t === "bigint") return "int";
         if (t === "function") return "lambda";
         if (Array.isArray(e)) return "list";
         if (t === "object") return "set";
@@ -384,20 +426,34 @@ let
         return val;
       }
     '';
-    length = "e=>e.length";
-    mul = "a=>b=>(a * b)";
+    length = "e=>BigInt(e.length)";
+    mul = ''
+      a=>b=>{
+        if (
+          (typeof a === "bigint" && typeof b === "bigint")
+          || (typeof a === "number" && typeof b === "number")
+        )
+          return a * b;
+        if (
+          (typeof a == "bigint" && typeof b === "number")
+          || (typeof a === "number" && typeof b === "bigint")
+        )
+          return Number(a) * Number(b);
+        throw new Error("multiplication only works on numbers")
+      }
+    '';
     hasAttr = "attr=>s=>Object.prototype.hasOwnProperty.call(s, attr)";
     div = ''
       a=>b=>{
-        if (typeof a !== "number" || typeof b !== "number") {
-          throw new Error("gestalt_primop_div: both arguments must be numbers");
+        if (typeof a === "bigint" && typeof b === "bigint") {
+          if (b === 0n) throw new Error("division by zero");
+          return a / b; // BigInt division automatically truncates!
         }
-        if (Number.isInteger(a) && Number.isInteger(b)) {
-          if (b === 0) throw new Error("gestalt_primop_div: division by zero");
-          return Math.trunc(a / b);
-        }
-        if (b === 0) throw new Error("gestalt_primop_div: division by zero");
-        return (a / b);
+
+        const numA = Number(a);
+        const numB = Number(b);
+        if (numB === 0) throw new Error("division by zero");
+        return numA / numB; 
       }
     '';
     any = "func=>list=>list.some(func)";
@@ -413,9 +469,9 @@ let
             return false;
           }'';
     substring = ''
-      start=>end=>str=>str.substring(start, end)
+      start=>end=>str=>str.substring(Number(start), Number(end))
     '';
-    stringLength = "str=>str.length";
+    stringLength = "str=>BigInt(str.length)";
     seq = "a=>b=>b";
   };
 in

@@ -99,10 +99,17 @@
 
       checks = nixpkgs.lib.genAttrs nixpkgs.lib.systems.flakeExposed (
         system:
+        let
+          pkgs = import nixpkgs {
+            inherit system;
+            overlays = [ self.overlays.default ];
+          };
+        in
         self.packages.${system}
         // {
           fullPublishExample = self.packages.${system}.practiceHelper.publish;
           fmt = treefmtEval.${system}.config.build.check self;
+          translation = import ./tests/translators/default.nix { inherit pkgs; };
         }
       );
     };

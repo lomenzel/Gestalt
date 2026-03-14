@@ -78,7 +78,13 @@ in
                   if (config.expected.toBe == null) == (config.expected.toPass == null) then
                     throw "You must specify either expected.toBe or expected.toPass, but not both."
                   else if config.expected.toBe != null then
-                    (x: x == config.expected.toBe)
+                    (
+                      x:
+                      if (x != config.expected.toBe) then
+                        builtins.trace "expected: ${builtins.toJSON config.expected.toBe}; got: ${builtins.toJSON x}" false
+                      else
+                        (x == config.expected.toBe)
+                    )
                   else
                     config.expected.toPass;
               };
