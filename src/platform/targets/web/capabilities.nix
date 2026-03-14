@@ -11,6 +11,35 @@
       id = "log";
       params = params;
     };
+
+    Store = {
+      get = key: callbackActionId: {
+        description = "Reads a value from disk by its key.";
+        callBackParamType = {
+          _type = "struct";
+          fields = {
+            success = {
+              _type = "bool";
+            };
+            value = {
+              _type = "any";
+            };
+          };
+        };
+        id = "store.get";
+        params = {
+          inherit key callbackActionId;
+        };
+      };
+      set = key: value: {
+        description = "Writes a value to disk by its key.";
+        id = "store.set";
+        params = {
+          inherit key value;
+        };
+      };
+    };
+
     noop = {
       description = "Does nothing";
       id = "noop";
@@ -108,8 +137,9 @@
       };
       id = "invokeAction";
       params = {
-        params = {};
-      } // params;
+        params = { };
+      }
+      // params;
     };
 
   };

@@ -7,16 +7,50 @@
 #include <algorithm>
 #include <cctype>
 
+#include <filesystem>
+#include <fstream>
+#include <cstdlib>
+
 // Include libcurl!
 #include <curl/curl.h>
 
 using Value = GestaltCore::Value;
+
+namespace fs = std::filesystem;
 
 // --- Forward Declarations ---
 void clearScreen();
 void flushInput();
 void executeEffect(GestaltCore& core, const Value& effect);
 void invokeAction(GestaltCore& core, const std::string& actionName, const Value& params);
+
+
+fs::path getConfigDir() {
+    if (const char* xdg = std::getenv("XDG_CONFIG_HOME"); xdg && *xdg) {
+        return fs::path(xdg);
+    }
+    if (const char* home = std::getenv("HOME"); home && *home) {
+        return fs::path(home) / ".config";
+    }
+
+    // no idea if windows works that way. i dont even build for windows, but maybe this helps in the future
+    if (const char* appData = std::getenv("APPDATA"); appData && *appData) {
+        return fs::path(appData);
+    }
+
+    // Fallback to current directory if no environment variables are set
+    return fs::current_path();
+}
+
+fs::path getKVStorePath(GestaltCore& core) {
+    Value meta = core.getMeta();
+
+    std::string author =  meta["author"]["name"].asString();
+    std::string name = meta["name"].asString();
+    std::string version = meta["version"].asString();
+
+    return getConfigDir() / "Gestalt Applications" / author / name / version / "KV_Store";
+}
 
 // --- UI Helpers ---
 void clearScreen() {
@@ -83,6 +117,65 @@ void executeEffect(GestaltCore& core, const Value& effect) {
     if (effectId == "noop") {
         return;
     } 
+    else if (effectId == "store.set") {
+        try {
+            Value params = effect["params"];
+            std::string key = params["key"].asString();
+            Value value = params["value"];
+
+            fs::path storeDir = getKVStorePath(core);
+            fs::create_directories(storeDir); 
+            
+            fs::path filePath = storeDir / (key + ".txt");
+            std::ofstream out(filePath);
+            
+            if (out.is_open()) {
+                // Using the nlohmann::json integration defined in core.hpp
+                nlohmann::json j = value; 
+                out << j.dump(); 
+                std::cout << "[Gestalt][DEBUG] Setting key \"" << key << "\" in store.\n";
+            }
+        } catch (...) {
+            std::cout << "[ERROR] store.set effect missing parameters or could not be saved.\n";
+        }
+    }
+    else if (effectId == "store.get") {
+        try {
+            Value params = effect["params"];
+            std::string key = params["key"].asString();
+            std::string cbAction = params["callbackActionId"].asString();
+
+            fs::path storeDir = getKVStorePath(core);
+            fs::path filePath = storeDir / (key + ".txt");
+
+            Value::Set cbParams;
+            if (fs::exists(filePath)) {
+                std::ifstream in(filePath);
+                std::string content((std::istreambuf_iterator<char>(in)),
+                                     std::istreambuf_iterator<char>());
+
+                cbParams["success"] = Value::fromBool(true); // Using your fromBool!
+                
+                try {
+                    // Parse string directly back into GestaltCore::Value
+                    cbParams["value"] = nlohmann::json::parse(content).get<Value>();
+                } catch(...) {
+                    // Fallback to raw string if the file isn't valid JSON
+                    cbParams["value"] = Value::fromString(content);
+                }
+                
+                std::cout << "[Gestalt][DEBUG] Retrieved key \"" << key << "\" from store.\n";
+            } else {
+                std::cout << "[Gestalt][DEBUG] Key \"" << key << "\" not found in store.\n";
+                cbParams["success"] = Value::fromBool(false); 
+                cbParams["value"] = Value::fromString("Key not found");
+            }
+
+            invokeAction(core, cbAction, Value::fromSet(cbParams));
+        } catch (...) {
+            std::cout << "[ERROR] store.get effect missing parameters.\n";
+        }
+    }
     else if (effectId == "log") {
         try {
             std::cout << "LOG EFFECT: " << effect["params"]["message"].asString() << "\n";

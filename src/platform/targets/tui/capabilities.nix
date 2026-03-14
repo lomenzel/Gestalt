@@ -15,6 +15,35 @@
       description = "Does nothing";
       id = "noop";
     };
+
+    Store = {
+      get = key: callbackActionId: {
+        description = "Reads a value from disk by its key.";
+        callBackParamType = {
+          _type = "struct";
+          fields = {
+            success = {
+              _type = "bool";
+            };
+            value = {
+              _type = "any";
+            };
+          };
+        };
+        id = "store.get";
+        params = {
+          inherit key callbackActionId;
+        };
+      };
+      set = key: value: {
+        description = "Writes a value to disk by its key.";
+        id = "store.set";
+        params = {
+          inherit key value;
+        };
+      };
+    };
+
     httpRequest = params: {
       description = "Makes an HTTP request.";
       paramType = {
@@ -109,7 +138,8 @@
       id = "invokeAction";
       params = {
         params = null;
-      } // params;
+      }
+      // params;
     };
 
   };

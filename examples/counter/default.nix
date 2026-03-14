@@ -6,6 +6,8 @@
 }:
 let
 
+  inherit (target.capabilities.effects) Store;
+
   signum =
     x:
     if x < 0 then
@@ -31,9 +33,7 @@ in
 {
   initialState.counter = 0;
   showcaseState.counter = 42;
-  initialEffect = target.capabilities.effects.invokeAction {
-    actionId = "increment";
-  };
+  initialEffect = target.capabilities.effects.noop;
   tests.unit = [
     {
       func = sum;
@@ -73,7 +73,7 @@ in
           views,
           ...
         }:
-        state.counter == 1
+        state.counter == 0
         && builtins.all (effect: effect == target.capabilities.effects.noop) (lib.tail emittedEffects)
         && builtins.all (
           view: builtins.any (element: lib.hasPrefix "Counter" element.content) view.elements
@@ -111,6 +111,14 @@ in
           content = "Reset";
           actionId = "reset";
         }
+        {
+          content = "Save";
+          actionId = "save";
+        }
+        {
+          content = "Restore";
+          actionId = "restore";
+        }
       ];
     })
   ];
@@ -123,6 +131,37 @@ in
           counter = state.counter + 1;
         };
       };
+
+    handleReadFromStore = {
+      function =
+        { state, params }:
+        {
+          state = state // {
+            counter = if params.success then params.value else state.counter;
+          };
+        };
+      paramType = {
+        _type = "struct";
+        fields = {
+          value = {
+            _type = "any";
+          };
+          success = {
+            _type = "bool";
+          };
+        };
+      };
+    };
+
+    save = { state, ...}: {
+      inherit state;
+      effect = Store.set "counter" state.counter;
+    };
+
+    restore = { state, ... }: {
+      inherit state;
+      effect = Store.get "counter" "handleReadFromStore";
+    };
 
     incrementBy = {
       function =

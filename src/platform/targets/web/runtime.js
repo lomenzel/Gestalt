@@ -31,12 +31,28 @@
     if (handler) handler(effect.params);
   }
 
-  
+
   var effectFunctions = {
     noop: function () { },
 
     log: function (params) {
       console.log('%c[App]%c ' + params.message, 'color:#30a46c;font-weight:700', 'color:inherit');
+    },
+
+    "store.get": function (params) {
+      const res = localStorage.getItem(params.key);
+      if (res === null) {
+        console.log(`[Gestalt][DEBUG] Key "${params.key}" not found in store.`);
+        window.invokeAction(params.callbackActionId, { success: false, value: 'Key not found' });
+      } else {
+        console.log(`[Gestalt][DEBUG] Retrieved key "${params.key}" from store with value:`, res);
+        window.invokeAction(params.callbackActionId, { success: true, value: JSON.parse(res) });
+      }
+    },
+
+    "store.set": function (params) {
+      console.log(`[Gestalt][DEBUG] Setting key "${params.key}" in store with value:`, params.value);
+      localStorage.setItem(params.key, JSON.stringify(params.value));
     },
 
     httpRequest: function (params) {
