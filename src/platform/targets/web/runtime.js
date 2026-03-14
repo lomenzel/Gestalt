@@ -100,7 +100,9 @@
 
     random: function (params) {
       var result =
-        Math.floor(Math.random() * (Number(params.to) - Number(params.from) + 1)) + Number(params.from);
+        Math.floor(
+          Math.random() * (Number(params.to) - Number(params.from) + 1),
+        ) + Number(params.from);
       window.invokeAction(params.callbackActionId, { result: BigInt(result) });
     },
 
