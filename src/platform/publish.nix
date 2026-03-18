@@ -81,18 +81,10 @@
                 ]
             )}
             cp ${
-              (tui.override (old: {
-                ir = old.ir // {
-                  initialState = old.ir.showcaseState;
-                };
-              })).screenshot
+              tui.screenshot
             }/screenshot.png $out/download/${webIR.name}-tui.png
             cp ${
-              (web.override (old: {
-                ir = old.ir // {
-                  initialState = old.ir.showcaseState;
-                };
-              })).screenshot
+              web.screenshot
             }/screenshot.png $out/download/${webIR.name}-web.png
           '';
       };

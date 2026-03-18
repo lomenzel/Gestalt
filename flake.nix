@@ -58,6 +58,15 @@
           );
         };
 
+      devShells = eachSystem (system:
+      {
+        default = nixpkgs.legacyPackages.${system}.mkShell {
+          buildInputs = [
+            inputs.nixFork.packages.${system}.nix
+          ];
+        };
+      });
+
       # example usage
       packages = eachSystem (
         system:

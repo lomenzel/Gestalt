@@ -69,6 +69,22 @@ let
 
     rm $out/lib/generated/core.esm.js
   '';
+  public-screenshot = runCommand "${name}-public-assets" { } ''
+    mkdir -p $out/lib/generated
+    cp ${indexHTML} $out/index.html
+    cp ${./styles.css} $out/styles.css
+    cp ${./runtime.js} $out/runtime.js
+
+    # copy the ESM core produced by lib.gestaltCore.js and produce a
+    # browser-friendly variant that exposes globals on window
+    cp ${lib.gestaltCore.js (ir // {initialState = ir.showcaseState;})} $out/lib/generated/core.esm.js
+    # TODO gestaltCore should probably produce a browser-friendly version :)
+    sed \
+      -e 's/^export default/window.GestaltCore =/' \
+      $out/lib/generated/core.esm.js > $out/lib/generated/core.js
+
+    rm $out/lib/generated/core.esm.js
+  '';
 in
 runCommand name
   {
@@ -90,7 +106,7 @@ runCommand name
             echo "Taking headless screenshot of ${name}..."
             mkdir -p $out
 
-            cp -r ${public} ./app-copy
+            cp -r ${public-screenshot} ./app-copy
             chmod -R +w ./app-copy
             echo "* { transition: none !important; animation: none !important; }" >> ./app-copy/styles.css
 
