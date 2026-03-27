@@ -14,7 +14,7 @@
           [
             {
               content = "no text in state :()";
-              annotations = [ target.capabilities.annotations.ui.important ];
+              annotations = [ target.capabilities.annotations.Text.important ];
             }
           ];
       actions = [
@@ -36,11 +36,7 @@
         }:
         {
           state = state;
-          effect = target.capabilities.effects.httpRequest {
-            method = "GET";
-            url = params.url;
-            callBackActionId = "handleFetchResult";
-          };
+          effect = target.capabilities.Effects.HTTP.get params.url "handleFetchResult";
         };
       paramType = {
         _type = "struct";
@@ -61,7 +57,7 @@
           state = state // {
             text = "Fetched data (status: ${builtins.toString params.status}): ${params.body}";
           };
-          effect = target.capabilities.effects.noop;
+          effect = target.capabilities.Effects.Noop;
         };
       paramType = {
         _type = "struct";

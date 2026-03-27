@@ -77,7 +77,7 @@ let
 
     # copy the ESM core produced by lib.gestaltCore.js and produce a
     # browser-friendly variant that exposes globals on window
-    cp ${lib.gestaltCore.js (ir // {initialState = ir.showcaseState;})} $out/lib/generated/core.esm.js
+    cp ${lib.gestaltCore.js (ir // { initialState = ir.showcaseState; })} $out/lib/generated/core.esm.js
     # TODO gestaltCore should probably produce a browser-friendly version :)
     sed \
       -e 's/^export default/window.GestaltCore =/' \

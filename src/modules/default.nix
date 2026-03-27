@@ -31,7 +31,7 @@ in
     };
     initialEffect = lib.mkOption {
       type = lib.types.raw;
-      default = target.capabilities.effects.noop;
+      default = target.capabilities.Effects.Noop;
       description = "effect that should be run at application startup";
     };
     actions = lib.mkOption {
@@ -140,26 +140,12 @@ in
               type = lib.types.attrsOf lib.types.raw;
               readOnly = true;
               default = {
-                noop = _: [ ];
-                log = _: [ ];
-                invokeAction =
-                  { effect, ... }:
-                  [
-                    (
-                      {
-                        inherit (effect.params) actionId;
-                      }
-                      // (
-                        if builtins.hasAttr "params" effect.params then
-                          {
-                            params = effect.params.params;
-                          }
-                        else
-                          { }
-                      )
-                    )
-                  ];
-                random =
+                Noop = _: [ ];
+                Log = _: [ ];
+                "store.get" = _: [ ];
+                "store.set" = _: [ ];
+                invokeActions = { effect, ... }: effect.params.actions;
+                "Random.int" =
                   { effect, emittedEffects, ... }:
                   [
                     {
@@ -173,6 +159,7 @@ in
                       };
                     }
                   ];
+                httpRequest = _: [ ];
               }
               // local.config.effectMocks;
             };

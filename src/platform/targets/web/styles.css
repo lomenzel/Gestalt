@@ -157,6 +157,45 @@ body {
   display: none;
 }
 
+/* ── Progress bar ────────────────────────────────────────── */
+
+.progressbar-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.progressbar-wrapper:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.progressbar-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent);
+  min-width: 3.5em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.progressbar-track {
+  flex: 1;
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progressbar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
 /* ── Action buttons ──────────────────────────────────────── */
 
 .actions-grid {
@@ -251,12 +290,14 @@ body {
   background: var(--accent-glow);
 }
 
-.action-btn.navigation {
+.action-btn.navigation,
+.action-btn.navlink {
   border-color: var(--text-muted);
   color: var(--text-muted);
 }
 
-.action-btn.navigation:hover {
+.action-btn.navigation:hover,
+.action-btn.navlink:hover {
   border-color: var(--text);
   color: var(--text);
 }

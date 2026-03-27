@@ -47,7 +47,7 @@ in
       elements = [
         {
           content = state.message;
-          annotations = [ target.capabilities.annotations.ui.important ];
+          annotations = [ target.capabilities.annotations.Text.important ];
         }
       ]
       ++ (
@@ -55,16 +55,11 @@ in
           [
             {
               content = "Current Practice Range: from ${builtins.toString state.practiceRange.start} to ${builtins.toString state.practiceRange.end}";
-              annotations = [ ];
+              annotations = [ target.capabilities.annotations.Text.muted ];
             }
             {
-              content = "Progress: ${
-                builtins.substring 0 4 (builtins.toString (percentageDone state.done state.practiceRange * 100))
-              }%";
-              annotations = [ ];
-              # better would be:
-              # content = percentageDone state.done state.practiceRange
-              # annotations = [ target.capabilities.annotations.ui.progressBar];
+              content = percentageDone state.done state.practiceRange;
+              annotations = [ target.capabilities.annotations.Progress.bar ];
             }
           ]
         else
@@ -82,7 +77,7 @@ in
           [
             {
               content = "Next task!";
-              annotations = [ target.capabilities.annotations.actions.primary ];
+              annotations = [ target.capabilities.annotations.Button.primary ];
               actionId = "next";
             }
           ]
@@ -130,10 +125,7 @@ in
               end = params.end;
             };
           };
-          effect = target.capabilities.effects.invokeAction {
-            actionId = "next";
-            params = { };
-          };
+          effect = target.capabilities.Effects.Actions.invoke "next" { };
         };
       paramType = {
         _type = "struct";
@@ -170,12 +162,14 @@ in
             }) params.result;
           };
         };
-      paramType =
-        (target.capabilities.effects.random {
-          from = 1;
-          to = 2;
-          callbackActionId = "handleRandomResult";
-        }).callBackParamType;
+      paramType = {
+        _type = "struct";
+        fields = {
+          result = {
+            _type = "int";
+          };
+        };
+      };
     };
     next = {
       function =
@@ -198,17 +192,14 @@ in
         else
           {
             state = state;
-            effect = target.capabilities.effects.random {
-              from = 0;
-              to =
-                (builtins.length (possibleParts {
-                  lower = state.practiceRange.start;
-                  upper = state.practiceRange.end;
-                  done = state.done;
-                }))
-                - 1;
-              callbackActionId = "handleRandomResult";
-            };
+            effect = target.capabilities.Effects.Random.int 0 (
+              (builtins.length (possibleParts {
+                lower = state.practiceRange.start;
+                upper = state.practiceRange.end;
+                done = state.done;
+              }))
+              - 1
+            ) "handleRandomResult";
           };
       paramType = {
         _type = "struct";

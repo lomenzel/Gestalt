@@ -6,7 +6,7 @@
 }:
 let
 
-  inherit (target.capabilities.effects) Store;
+  inherit (target.capabilities.Effects) Store;
 
   signum =
     x:
@@ -33,7 +33,7 @@ in
 {
   initialState.counter = 0;
   showcaseState.counter = 42;
-  initialEffect = target.capabilities.effects.noop;
+  initialEffect = target.capabilities.Effects.Noop;
   tests.unit = [
     {
       func = sum;
@@ -74,7 +74,7 @@ in
           ...
         }:
         state.counter == 0
-        && builtins.all (effect: effect == target.capabilities.effects.noop) (lib.tail emittedEffects)
+        && builtins.all (effect: effect == target.capabilities.Effects.Noop) (lib.tail emittedEffects)
         && builtins.all (
           view: builtins.any (element: lib.hasPrefix "Counter" element.content) view.elements
         ) views;
@@ -206,9 +206,7 @@ in
         state = state // {
           counter = config.initialState.counter;
         };
-        effect = target.capabilities.effects.log {
-          message = "Counter reset to zero.";
-        };
+        effect = target.capabilities.Effects.Log.info "Counter reset to zero.";
       };
   };
   title = "Counter (Gestalt Example)";

@@ -144,7 +144,7 @@
                 { state, params }@p:
                 {
                   inherit state;
-                  effect = target.capabilities.effects.noop;
+                  effect = target.capabilities.Effects.Noop;
                 }
                 // (af_ p);
             in

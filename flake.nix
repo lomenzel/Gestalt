@@ -58,8 +58,7 @@
           );
         };
 
-      devShells = eachSystem (system:
-      {
+      devShells = eachSystem (system: {
         default = nixpkgs.legacyPackages.${system}.mkShell {
           buildInputs = [
             inputs.nixFork.packages.${system}.nix

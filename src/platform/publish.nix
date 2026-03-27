@@ -80,12 +80,8 @@
                   # "mingw32"
                 ]
             )}
-            cp ${
-              tui.screenshot
-            }/screenshot.png $out/download/${webIR.name}-tui.png
-            cp ${
-              web.screenshot
-            }/screenshot.png $out/download/${webIR.name}-web.png
+            cp ${tui.screenshot}/screenshot.png $out/download/${webIR.name}-tui.png
+            cp ${web.screenshot}/screenshot.png $out/download/${webIR.name}-web.png
           '';
       };
       full = config.gestaltPlatform.buildApplication {

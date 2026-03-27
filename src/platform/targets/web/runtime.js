@@ -32,11 +32,11 @@
   }
 
   var effectFunctions = {
-    noop: function () {},
+    Noop: function () {},
 
-    log: function (params) {
+    Log: function (params) {
       console.log(
-        "%c[App]%c " + params.message,
+        "%c[App]%c " + params,
         "color:#30a46c;font-weight:700",
         "color:inherit",
       );
@@ -98,7 +98,7 @@
         });
     },
 
-    random: function (params) {
+    "Random.int": function (params) {
       var result =
         Math.floor(
           Math.random() * (Number(params.to) - Number(params.from) + 1),
@@ -106,12 +106,24 @@
       window.invokeAction(params.callbackActionId, { result: BigInt(result) });
     },
 
-    invokeAction: function (params) {
-      window.invokeAction(params.actionId, params.params);
+    invokeActions: function (params) {
+      var actions = params.actions;
+      for (var i = 0; i < actions.length; i++) {
+        window.invokeAction(actions[i].actionId, actions[i].params);
+      }
     },
   };
 
   /* ── Annotation helper ───────────────────────────────────── */
+
+  function hasAnnotation(annotations, name) {
+    if (!annotations || !annotations.length) return false;
+    return annotations.some(function (a) {
+      if (typeof a === "string") return a === name;
+      if (a && typeof a === "object" && a.name) return a.name === name;
+      return false;
+    });
+  }
 
   function applyAnnotations(el, annotations) {
     if (!annotations || !annotations.length) return;
@@ -215,11 +227,36 @@
       elementsCard.className = "card";
 
       ui.elements.forEach(function (el) {
-        var div = document.createElement("div");
-        div.className = "view-element";
-        div.textContent = el.content;
-        applyAnnotations(div, el.annotations);
-        elementsCard.appendChild(div);
+        if (hasAnnotation(el.annotations, "progressbar")) {
+          var wrapper = document.createElement("div");
+          wrapper.className = "view-element progressbar-wrapper";
+
+          var fraction = Number(el.content);
+          if (isNaN(fraction)) fraction = 0;
+          var pct = Math.max(0, Math.min(100, fraction * 100));
+
+          var label = document.createElement("span");
+          label.className = "progressbar-label";
+          label.textContent = Math.round(pct) + "%";
+
+          var track = document.createElement("div");
+          track.className = "progressbar-track";
+
+          var fill = document.createElement("div");
+          fill.className = "progressbar-fill";
+          fill.style.width = pct + "%";
+
+          track.appendChild(fill);
+          wrapper.appendChild(label);
+          wrapper.appendChild(track);
+          elementsCard.appendChild(wrapper);
+        } else {
+          var div = document.createElement("div");
+          div.className = "view-element";
+          div.textContent = el.content;
+          applyAnnotations(div, el.annotations);
+          elementsCard.appendChild(div);
+        }
       });
 
       viewContainer.appendChild(elementsCard);

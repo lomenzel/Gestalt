@@ -18,6 +18,49 @@ using Value = GestaltCore::Value;
 
 namespace fs = std::filesystem;
 
+// --- Annotation Helpers ---
+bool hasAnnotation(const Value& el, const std::string& name) {
+    try {
+        Value annotations = el["annotations"];
+        if (annotations.type == Value::Type::List) {
+            for (const auto& a : std::get<Value::List>(annotations.value)) {
+                try {
+                    if (a.type == Value::Type::Set && a["name"].asString() == name) return true;
+                } catch (...) {}
+                try {
+                    if (a.type == Value::Type::String && a.asString() == name) return true;
+                } catch (...) {}
+            }
+        }
+    } catch (...) {}
+    return false;
+}
+
+// ANSI escape codes
+const std::string ANSI_RESET   = "\x1B[0m";
+const std::string ANSI_BOLD    = "\x1B[1m";
+const std::string ANSI_DIM     = "\x1B[2m";
+const std::string ANSI_ACCENT  = "\x1B[1;35m";  // bold magenta (accent)
+const std::string ANSI_MUTED   = "\x1B[2;37m";  // dim white
+
+void renderProgressBar(double fraction, int width = 40) {
+    int filled = static_cast<int>(fraction * width);
+    if (filled < 0) filled = 0;
+    if (filled > width) filled = width;
+
+    std::string pct = std::to_string(static_cast<int>(fraction * 100));
+    // pad to 3 chars
+    while (pct.size() < 3) pct = " " + pct;
+
+    std::cout << "  " << pct << "% [";
+    for (int i = 0; i < width; ++i) {
+        if (i < filled) std::cout << "=";
+        else if (i == filled) std::cout << ">";
+        else std::cout << ".";
+    }
+    std::cout << "]\n";
+}
+
 // --- Forward Declarations ---
 void clearScreen();
 void flushInput();
@@ -114,7 +157,7 @@ void executeEffect(GestaltCore& core, const Value& effect) {
     std::string effectId;
     try { effectId = effect["id"].asString(); } catch (...) { return; }
 
-    if (effectId == "noop") {
+    if (effectId == "Noop") {
         return;
     } 
     else if (effectId == "store.set") {
@@ -176,15 +219,15 @@ void executeEffect(GestaltCore& core, const Value& effect) {
             std::cout << "[ERROR] store.get effect missing parameters.\n";
         }
     }
-    else if (effectId == "log") {
+    else if (effectId == "Log") {
         try {
-            std::cout << "LOG EFFECT: " << effect["params"]["message"].asString() << "\n";
+            std::cout << "LOG EFFECT: " << effect["params"].asString() << "\n";
             std::cout << "Press Enter to continue...";
             flushInput();
             std::cin.get();
         } catch (...) {}
     } 
-    else if (effectId == "random") {
+    else if (effectId == "Random.int") {
         try {
             Value params = effect["params"];
             long long min = params["from"].asInt();
@@ -204,15 +247,20 @@ void executeEffect(GestaltCore& core, const Value& effect) {
             std::cout << "[ERROR] Random effect missing parameters.\n";
         }
     } 
-    else if (effectId == "invokeAction") {
+    else if (effectId == "invokeActions") {
         try {
             Value params = effect["params"];
-            std::string actionId = params["actionId"].asString();
-            Value innerParams = Value::fromSet(Value::Set{});
-            try { innerParams = params["params"]; } catch (...) {}
-            invokeAction(core, actionId, innerParams);
+            Value actions = params["actions"];
+            if (actions.type == Value::Type::List) {
+                for (const auto& act : std::get<Value::List>(actions.value)) {
+                    std::string actionId = act["actionId"].asString();
+                    Value innerParams = Value::fromSet(Value::Set{});
+                    try { innerParams = act["params"]; } catch (...) {}
+                    invokeAction(core, actionId, innerParams);
+                }
+            }
         } catch (...) {
-            std::cout << "[ERROR] invokeAction effect missing parameters.\n";
+            std::cout << "[ERROR] invokeActions effect missing parameters.\n";
         }
     } 
     else if (effectId == "httpRequest") {
@@ -329,7 +377,28 @@ int main() {
             Value elements = view["elements"];
             if (elements.type == Value::Type::List) {
                 for (const auto& el : std::get<Value::List>(elements.value)) {
-                    if (el.type == Value::Type::Set) std::cout << "  " << el["content"].asString() << "\n";
+                    if (el.type != Value::Type::Set) continue;
+
+                    if (hasAnnotation(el, "progressbar")) {
+                        // content is a float 0..1
+                        double fraction = 0.0;
+                        try {
+                            Value content = el["content"];
+                            if (content.type == Value::Type::Float)
+                                fraction = content.asFloat();
+                            else if (content.type == Value::Type::Int)
+                                fraction = static_cast<double>(content.asInt());
+                            else
+                                fraction = std::stod(content.asString());
+                        } catch (...) {}
+                        renderProgressBar(fraction);
+                    } else if (hasAnnotation(el, "important")) {
+                        std::cout << "  " << ANSI_ACCENT << el["content"].asString() << ANSI_RESET << "\n";
+                    } else if (hasAnnotation(el, "muted")) {
+                        std::cout << "  " << ANSI_MUTED << el["content"].asString() << ANSI_RESET << "\n";
+                    } else {
+                        std::cout << "  " << el["content"].asString() << "\n";
+                    }
                 }
             }
         } catch (...) {}

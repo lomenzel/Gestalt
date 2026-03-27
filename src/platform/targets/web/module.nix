@@ -3,7 +3,7 @@
 
   gestaltPlatform.targets.web = {
 
-    capabilities = import ./capabilities.nix;
+    capabilities = import ../../defaultCapabilities.nix;
     # backreference to use in upstream compat mode
     name = "web";
 
