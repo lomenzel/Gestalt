@@ -11,7 +11,10 @@ let
 
   percentageDone =
     done: practiceRange: ((builtins.length done - 1) * 1.0) / numberOfPracticeParts practiceRange;
+
 in
+with target.capabilities.Effects;
+with target.capabilities.annotations;
 {
 
   imports = [ ./tests.nix ];
@@ -47,7 +50,7 @@ in
       elements = [
         {
           content = state.message;
-          annotations = [ target.capabilities.annotations.Text.important ];
+          annotations = [ Text.important ];
         }
       ]
       ++ (
@@ -55,11 +58,11 @@ in
           [
             {
               content = "Current Practice Range: from ${builtins.toString state.practiceRange.start} to ${builtins.toString state.practiceRange.end}";
-              annotations = [ target.capabilities.annotations.Text.muted ];
+              annotations = [ Text.muted ];
             }
             {
               content = percentageDone state.done state.practiceRange;
-              annotations = [ target.capabilities.annotations.Progress.bar ];
+              annotations = [ Progress.bar ];
             }
           ]
         else
@@ -77,7 +80,7 @@ in
           [
             {
               content = "Next task!";
-              annotations = [ target.capabilities.annotations.Button.primary ];
+              annotations = [ Button.primary ];
               actionId = "next";
             }
           ]
@@ -125,7 +128,7 @@ in
               end = params.end;
             };
           };
-          effect = target.capabilities.Effects.Actions.invoke "next" { };
+          effect = Actions.invoke "next" { };
         };
       paramType = {
         _type = "struct";
@@ -192,7 +195,7 @@ in
         else
           {
             state = state;
-            effect = target.capabilities.Effects.Random.int 0 (
+            effect = Random.int 0 (
               (builtins.length (possibleParts {
                 lower = state.practiceRange.start;
                 upper = state.practiceRange.end;
