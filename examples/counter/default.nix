@@ -1,216 +1,69 @@
 {
-  target,
   config,
   lib,
+  target,
   ...
 }:
+
 let
-
-  inherit (target.capabilities.Effects) Store;
-
-  signum =
-    x:
-    if x < 0 then
-      -1
-    else if x > 0 then
-      1
-    else
-      0;
-  abs = x: if x < 0 then 0 - x else x;
-
-  #sum = x: if x > 0 then x + sum (x - 1) else if x < 0 then x + sum (x + 1) else 0; # test recursion
-  sum = x: (((abs x) * ((abs x) + 1)) / 2) * (signum x); # test helper functions
-  sum_ =
-    x:
-    if x > 0 then
-      add x (sum (x - 1))
-    else if x < 0 then
-      add x (sum (x + 1))
-    else
-      0; # test currying currying
-  add = x: y: x + y;
+  inherit (target.components)
+    section
+    displayValue
+    actionGroup
+    action
+    ;
+  inherit (target.effects) Noop Log;
 in
 {
-  initialState.counter = 0;
-  showcaseState.counter = 42;
-  initialEffect = target.capabilities.Effects.Noop;
-  tests.unit = [
-    {
-      func = sum;
-      description = "Sum up to 5 should be 15";
-      params = 5;
-      expected.toBe = 15;
-    }
-    {
-      func = sum;
-      description = "Sum up to -3 should be -6";
-      params = -3;
-      expected.toBe = -6;
-    }
-    {
-      func = sum;
-      description = "Sum up to 0 should be 0";
-      params = 0;
-      expected.toBe = 0;
-    }
-  ];
-
-  tests.e2e = [
-    {
-      description = "incrementing and decrementing should result in same counter value";
-      steps = [
-        {
-          actionId = "increment";
-        }
-        {
-          actionId = "decrement";
-        }
-      ];
-      pass =
-        {
-          state,
-          emittedEffects,
-          views,
-          ...
-        }:
-        state.counter == 0
-        && builtins.all (effect: effect == target.capabilities.Effects.Noop) (lib.tail emittedEffects)
-        && builtins.all (
-          view: builtins.any (element: lib.hasPrefix "Counter" element.content) view.elements
-        ) views;
-    }
-  ];
-
-  view = [
-    (state: {
-      elements = [
-        {
-          content = "Counter: " + (builtins.toString state.counter);
-          annotations = [ ];
-        }
-      ];
-      actions = [
-        {
-          content = "Increment";
-          actionId = "increment";
-          annotations = [ ];
-        }
-        {
-          content = "Decrement";
-          actionId = "decrement";
-        }
-        {
-          content = "Increment by";
-          actionId = "incrementBy";
-        }
-        {
-          content = "Sum up to counter";
-          actionId = "sumUp";
-        }
-        {
-          content = "Reset";
-          actionId = "reset";
-        }
-        {
-          content = "Save";
-          actionId = "save";
-        }
-        {
-          content = "Restore";
-          actionId = "restore";
-        }
-      ];
-    })
-  ];
-
-  actions = {
-    increment =
-      { state, ... }:
-      {
-        state = state // {
-          counter = state.counter + 1;
-        };
-      };
-
-    handleReadFromStore = {
-      function =
-        { state, params }:
-        {
-          state = state // {
-            counter = if params.success then params.value else state.counter;
-          };
-        };
-      paramType = {
-        _type = "struct";
-        fields = {
-          value = {
-            _type = "any";
-          };
-          success = {
-            _type = "bool";
-          };
-        };
-      };
-    };
-
-    save =
-      { state, ... }:
-      {
-        inherit state;
-        effect = Store.set "counter" state.counter;
-      };
-
-    restore =
-      { state, ... }:
-      {
-        inherit state;
-        effect = Store.get "counter" "handleReadFromStore";
-      };
-
-    incrementBy = {
-      function =
-        { state, params }:
-        {
-          state = state // {
-            counter = state.counter + params.amount;
-          };
-        };
-      paramType = {
-        _type = "struct";
-        fields = {
-          amount = {
-            _type = "int";
-          };
-        };
-      };
-    };
-    decrement =
-      { state, ... }:
-      {
-        state = state // {
-          counter = state.counter - 1;
-        };
-      };
-
-    sumUp =
-      { state, ... }:
-      {
-        state = state // {
-          counter = sum state.counter;
-        };
-      };
-
-    reset =
-      { state, ... }:
-      {
-        state = state // {
-          counter = config.initialState.counter;
-        };
-        effect = target.capabilities.Effects.Log.info "Counter reset to zero.";
-      };
+  app = {
+    name = "example-counter";
+    title = "Gestalt Counter";
+    version = "0.0.1";
+    author.name = "Leonard Menzel";
   };
-  title = "Counter (Gestalt Example)";
-  name = "example-counter";
-  version = "0.0.2";
-  author.name = "Leonard Menzel";
+
+  init = {
+    state = {
+      counter = 0;
+    };
+    effect = Log.info "Counter app initialized with counter = ${builtins.toString config.init.state.counter}";
+  };
+
+  view =
+    { state, config, ... }:
+    {
+      page.sections = {
+        status = {
+          order = 1; # optional. deaults to alphabetical after sections with order
+          content = displayValue {
+            label = "Counter Value";
+            tooltip = "The current value of the counter";
+            value = "Counter: ${builtins.toString state.counter}";
+          };
+        };
+        controls = {
+          order = 2;
+          content = actionGroup {
+            actions = {
+              increment = action {
+                name = "Increment";
+                tooltip = "Increase the counter by 1";
+                onClick = state: {
+                  counter = state.counter + 1;
+                }; # result gets deeply merged into state
+              };
+              decrement = action {
+                name = "Decrement";
+                tooltip = "Decrease the counter by 1";
+                onClick = state: {
+                  state.counter = state.counter - 1;
+                  effect = Log.info "Counter decremented to ${builtins.toString state.counter}";
+                }; # if has key "state" or "effect" it merges state into state and runs effect.
+                   # will throw on invalid return value
+              };
+            };
+          };
+      };
+      page.title = "C: ${builtins.toString state.counter} | Counter Example";
+    };
 }

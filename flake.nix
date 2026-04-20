@@ -9,6 +9,10 @@
     systems.url = "github:nix-systems/default";
     treefmt-nix.url = "github:numtide/treefmt-nix";
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
+    wechselbalg = {
+      type = "git";
+      url = "https://rad-node.menzel.lol/rad:zpRitanyyPyavYSf6RWXeXry864M.git";
+    };
   };
 
   outputs =
@@ -16,13 +20,26 @@
       self,
       nixpkgs,
       treefmt-nix,
+      wechselbalg,
       ...
     }@inputs:
     let
-      eachSystem = nixpkgs.lib.genAttrs nixpkgs.lib.systems.flakeExposed;
-      treefmtEval = eachSystem (
-        system: treefmt-nix.lib.evalModule (import nixpkgs { inherit system; }) ./treefmt.nix
-      );
+      eachSystem =
+        f:
+        nixpkgs.lib.genAttrs nixpkgs.lib.systems.flakeExposed (
+          system:
+          f {
+            inherit system;
+            pkgs = import nixpkgs {
+              inherit system;
+              overlays = [
+                wechselbalg.overlays.default
+                self.overlays.default
+              ];
+            };
+          }
+        );
+      treefmtEval = eachSystem ({ pkgs, ... }: treefmt-nix.lib.evalModule pkgs ./treefmt.nix);
     in
     {
       overlays.default =
@@ -58,26 +75,23 @@
           );
         };
 
-      devShells = eachSystem (system: {
-        default = nixpkgs.legacyPackages.${system}.mkShell {
-          buildInputs = [
-            inputs.nixFork.packages.${system}.nix
-          ];
-        };
-      });
+      devShells = eachSystem (
+        { system, pkgs }:
+        {
+          default = pkgs.mkShell {
+            buildInputs = [
+              inputs.nixFork.packages.${system}.nix
+              pkgs.nodejs
+              pkgs.clang
+            ];
+          };
+        }
+      );
 
       # example usage
       packages = eachSystem (
-        system:
-        let
-          pkgs = (
-            import nixpkgs {
-              inherit system;
-              #system = "aarch64-linux";
-              overlays = [ self.overlays.default ];
-            }
-          );
-        in
+        { system, pkgs, ... }:
+
         {
           practiceHelper = pkgs.gestaltPlatform.buildApplication {
             src = ./examples/practiceHelper;
@@ -102,17 +116,12 @@
       );
 
       # for `nix fmt`
-      formatter = eachSystem (system: treefmtEval.${system}.config.build.wrapper);
+      formatter = eachSystem ({ system, ... }: treefmtEval.${system}.config.build.wrapper);
       # for `nix flake check`
 
-      checks = nixpkgs.lib.genAttrs nixpkgs.lib.systems.flakeExposed (
-        system:
-        let
-          pkgs = import nixpkgs {
-            inherit system;
-            overlays = [ self.overlays.default ];
-          };
-        in
+      checks = eachSystem (
+        { system, pkgs, ... }:
+
         self.packages.${system}
         // {
           fullPublishExample = self.packages.${system}.practiceHelper.publish;
