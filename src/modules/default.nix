@@ -14,38 +14,42 @@ let
 
 in
 {
-  imports = [
-    ./ir.nix
-  ];
 
   options = {
-    initialState = lib.mkOption {
+    meta = {
+      name = lib.mkOption {
+        type = lib.types.str;
+        default = "untitled-application";
+      };
+      author.name = lib.mkOption {
+        type = lib.types.str;
+        default = "Anonymous Author";
+      };
+      version = lib.mkOption {
+        type = lib.types.str;
+        default = "0";
+      };
+      title = lib.mkOption {
+        type = lib.types.str;
+        default = config.name;
+      };
+    };
+    init.state = lib.mkOption {
       type = lib.types.attrs;
       default = { };
       description = "The initial state of the application.";
     };
     showcaseState = lib.mkOption {
       type = lib.types.attrs;
-      default = config.final.initialState;
+      default = config.init.state;
       description = "A showcase state of the application, used for marketing screenshots :)";
     };
-    initialEffect = lib.mkOption {
+    init.effect = lib.mkOption {
       type = lib.types.raw;
       default = target.capabilities.Effects.Noop;
       description = "effect that should be run at application startup";
     };
-    actions = lib.mkOption {
-      type = lib.types.attrs;
-      default = { };
-    };
-    types = lib.mkOption {
-      type = lib.types.attrs;
-      default = { };
-    };
-    stateHooks = lib.mkOption {
-      type = lib.types.listOf lib.types.raw;
-      default = [ ];
-    };
+
     tests.unit = lib.mkOption {
       type = lib.types.listOf (
         lib.types.submodule (
@@ -95,111 +99,15 @@ in
       );
       default = [ ];
     };
-    tests.e2e = lib.mkOption {
-      type = lib.types.listOf (
-        lib.types.submodule (local: {
-          options = {
-            description = lib.mkOption {
-              type = lib.types.str;
-              default = "unnamed end-to-end test";
-            };
-            steps = lib.mkOption {
-              type = lib.types.listOf (
-                lib.types.submodule (
-                  { config, ... }:
-                  {
-                    options = {
-                      actionId = lib.mkOption {
-                        type = lib.types.str;
-                      };
-                      params = lib.mkOption {
-                        type = lib.types.raw;
-                        default = null;
-                      };
-                      hasParam = lib.mkOption {
-                        type = lib.types.bool;
-                        default = config.params != null;
-                      };
-                    };
-                  }
-                )
-              );
-            };
-            pass = lib.mkOption {
-              type = lib.types.raw;
-            };
-            initialState = lib.mkOption {
-              type = lib.types.raw;
-              default = config.final.initialState;
-            };
-            effectMocks = lib.mkOption {
-              type = lib.types.attrsOf lib.types.raw;
-              default = { };
-            };
-            final.effectMocks = lib.mkOption {
-              type = lib.types.attrsOf lib.types.raw;
-              readOnly = true;
-              default = {
-                Noop = _: [ ];
-                Log = _: [ ];
-                "store.get" = _: [ ];
-                "store.set" = _: [ ];
-                invokeActions = { effect, ... }: effect.params.actions;
-                "Random.int" =
-                  { effect, emittedEffects, ... }:
-                  [
-                    {
-                      actionId = effect.params.callbackActionId;
-                      params = {
-                        result =
-                          effect.params.from
-                          + (lib.mod (nextRandom (builtins.length emittedEffects)) (
-                            effect.params.to - effect.params.from + 1
-                          ));
-                      };
-                    }
-                  ];
-                httpRequest = _: [ ];
-              }
-              // local.config.effectMocks;
-            };
-          };
-        })
-      );
-      default = [ ];
-    };
-    view = lib.mkOption {
-      type = lib.types.listOf lib.types.raw;
-      default = [
-        (state: {
-          elements = [
-            {
-              content = "state: ${builtins.toJSON state}";
-            }
-          ];
-          actions =
-            builtins.attrNames config.actions
-            |> builtins.map (actionId: {
-              content = actionId;
-              actionId = actionId;
-            });
-        })
-      ];
-      description = ''
-        function taking state and returning 
-        {
-          elements: [{
-            content = string
-            annotations = [string]
-          }...],
-          actions: [{
-            content = string
-            actionId = string
-            annotations = [string]
-          }...]
-        }
 
-      '';
+    view = lib.mkOption {
+      type = lib.types.submoduleWith {
+        modules = [ ];
+        specialArgs = {
+          state = config.init.state;
+        };
+      };
+      default = { };
     };
 
   };

@@ -15,7 +15,7 @@ let
   inherit (target.effects) Noop Log;
 in
 {
-  app = {
+  meta = {
     name = "example-counter";
     title = "Gestalt Counter";
     version = "0.0.1";
@@ -58,12 +58,14 @@ in
                 onClick = state: {
                   state.counter = state.counter - 1;
                   effect = Log.info "Counter decremented to ${builtins.toString state.counter}";
-                }; # if has key "state" or "effect" it merges state into state and runs effect.
-                   # will throw on invalid return value
+                };
+                # if has key "state" or "effect" it merges state into state and runs effect.
+                # will throw on invalid return value
               };
             };
           };
+        };
+        page.title = "C: ${builtins.toString state.counter} | Counter Example";
       };
-      page.title = "C: ${builtins.toString state.counter} | Counter Example";
     };
 }

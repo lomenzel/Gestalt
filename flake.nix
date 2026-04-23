@@ -54,19 +54,11 @@
         {
           lib =
             prev.lib
-            // (import ./src/lib {
-              pkgs = prev;
-            })
-            // ({
-              mkAppImage = final.callPackage "${inputs.nix-appimage}/mkAppImage.nix" {
-                mkappimage-runtime =
-                  nix-appimage-packages.callPackage "${inputs.nix-appimage}/runtimes/appimage-type2-runtime"
-                    { };
-                mkappimage-apprun =
-                  nix-appimage-packages.callPackage "${inputs.nix-appimage}/appruns/userns-chroot"
-                    { };
-              };
-            });
+            // import ./src/lib {
+              inherit (final) lib;
+            };
+        }
+        // {
           gestaltPlatform = (
             import ./src/platform {
               pkgs = final;
@@ -83,6 +75,7 @@
               inputs.nixFork.packages.${system}.nix
               pkgs.nodejs
               pkgs.clang
+              pkgs.nixd
             ];
           };
         }
@@ -93,23 +86,9 @@
         { system, pkgs, ... }:
 
         {
-          practiceHelper = pkgs.gestaltPlatform.buildApplication {
-            src = ./examples/practiceHelper;
-            target = pkgs.gestaltPlatform.targets.web;
-            extraTargets = pkgs.gestaltPlatform.targets;
-          };
+
           counter = pkgs.gestaltPlatform.buildApplication {
             src = ./examples/counter;
-          };
-          http = pkgs.gestaltPlatform.buildApplication {
-            src = ./examples/http;
-          };
-          minimal = pkgs.gestaltPlatform.buildApplication {
-            src = ./examples/minimal;
-          };
-
-          performance-metrics = import ./benchmarks {
-            inherit pkgs;
           };
 
         }
@@ -124,9 +103,7 @@
 
         self.packages.${system}
         // {
-          fullPublishExample = self.packages.${system}.practiceHelper.publish;
           fmt = treefmtEval.${system}.config.build.check self;
-          translation = import ./tests/translators/default.nix { inherit pkgs; };
         }
       );
     };

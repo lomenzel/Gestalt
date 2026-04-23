@@ -9,11 +9,11 @@
   gestaltPlatform.buildApplication =
     {
       modules ? throw "You must provide a list of modules to build an application.",
-      target ? config.gestaltPlatform.targets.tui,
+      target ? config.gestaltPlatform.targets.test,
       extraTargets ? config.gestaltPlatform.targets,
       useUpstreamNix ? (!builtins.hasAttr "reify" builtins) || !builtins.hasAttr "sameFunction" builtins,
       src ? null,
-      mainFile ? "default.nix",
+      mainFile ? "app.nix",
     }:
     if useUpstreamNix then
       if src == null then
@@ -48,7 +48,7 @@
 
         app = target.buildApplication ir;
       in
-      app.overrideAttrs (old: {
+      (app.overrideAttrs (old: {
         passthru = (old.passthru or { }) // {
           extraTargets =
             old.passthru.extraTargets or { }
@@ -63,5 +63,5 @@
             ) extraTargets);
           publish = config.gestaltPlatform.publish modules';
         };
-      });
+      }));
 }
