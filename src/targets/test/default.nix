@@ -25,5 +25,6 @@
       action = x: { };
       section = x: { };
     };
+    module = ./module.nix;
   };
 }

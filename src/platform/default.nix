@@ -3,6 +3,7 @@
   modules = [
     ./buildApplication.nix
     ../targets/test/default.nix
+    ../targets/jstest/default.nix
     {
       options.gestaltPlatform.buildApplication = pkgs.lib.mkOption {
         type = pkgs.lib.types.raw;
@@ -11,7 +12,11 @@
         test = pkgs.lib.mkOption {
           type = pkgs.lib.types.raw;
         };
+        jstest = pkgs.lib.mkOption {
+          type = pkgs.lib.types.raw;
       };
+      };
+
     }
   ];
   specialArgs = {

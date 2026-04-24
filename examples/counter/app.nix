@@ -65,7 +65,8 @@ in
             };
           };
         };
-        page.title = "C: ${builtins.toString state.counter} | Counter Example";
       };
+      page.title = "C: ${builtins.toString state.counter} | Counter Example";
+
     };
 }

@@ -3,6 +3,8 @@
 #include "app.hpp"
 
 int main() {
-  std::cout << app::meta["name"].asString();
-  return 0;
+    std::cout << "Hello, World!" << std::endl;
+    std::cout << app::exampleView.asString() << std::endl;
+    std::cout << app::view(app::initialState).asString() << std::endl;
+    return 0;
 }
