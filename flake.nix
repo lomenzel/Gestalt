@@ -74,12 +74,33 @@
             buildInputs = [
               inputs.nixFork.packages.${system}.nix
               pkgs.nodejs
-              pkgs.clang
               pkgs.nixd
               pkgs.kdePackages.qtdeclarative
-              pkgs.clang-tools
-            ] ++ old.buildInputs;
+              (pkgs.writeShellScriptBin "clangd" ''
+                #!/bin/sh
+                exec "${pkgs.clang-tools}/bin/clangd" --query-driver="$(which g++)" $@
+              '')
+              # pkgs.clang-tools
+            ]
+            ++ old.buildInputs;
             CMAKE_EXPORT_COMPILE_COMMANDS = true;
+            LANG = "C.UTF-8";
+            shellHook = ''
+              # Generate .clangd config with Qt base include paths and query-driver.
+              # CMake's compile_commands.json only has per-module dirs (e.g. include/QtWidgets)
+              # but not the parent dirs needed to resolve transitive includes like
+              # <QtWidgets/qapplication.h>. Nix's gcc-wrapper injects these via
+              # NIX_CFLAGS_COMPILE, but clangd doesn't see them.
+              cat > .clangd <<EOF
+              CompileFlags:
+                CompilationDatabase: build/
+                Add:
+                  - -isystem
+                  - ${pkgs.kdePackages.qtbase}/include
+                  - -isystem
+                  - ${pkgs.kdePackages.qtdeclarative}/include
+              EOF
+            '';
           });
         }
       );

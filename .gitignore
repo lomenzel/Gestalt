@@ -3,3 +3,4 @@ result
 .cache
 build
 .vscode
+.clangd
