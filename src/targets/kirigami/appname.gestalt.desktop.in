@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=${APP_TITLE}
+Exec=${APP_NAME}
+Icon=kde
+Type=Application
+Terminal=false
+Categories=Utility

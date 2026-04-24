@@ -70,14 +70,17 @@
       devShells = eachSystem (
         { system, pkgs }:
         {
-          default = pkgs.mkShell {
+          default = self.packages.${system}.counter.overrideAttrs (old: {
             buildInputs = [
               inputs.nixFork.packages.${system}.nix
               pkgs.nodejs
               pkgs.clang
               pkgs.nixd
-            ];
-          };
+              pkgs.kdePackages.qtdeclarative
+              pkgs.clang-tools
+            ] ++ old.buildInputs;
+            CMAKE_EXPORT_COMPILE_COMMANDS = true;
+          });
         }
       );
 

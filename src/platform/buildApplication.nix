@@ -9,7 +9,7 @@
   gestaltPlatform.buildApplication =
     {
       modules ? throw "You must provide a list of modules to build an application.",
-      target ? config.gestaltPlatform.targets.test,
+      target ? config.gestaltPlatform.targets.kirigami,
       extraTargets ? config.gestaltPlatform.targets,
       useUpstreamNix ? (!builtins.hasAttr "reify" builtins) || !builtins.hasAttr "sameFunction" builtins,
       src ? null,
@@ -19,24 +19,7 @@
       if src == null then
         throw "You must provide a source directory instead of modules when using upstream nix compatibility mode."
       else
-        lib.warn
-          "You are using upstream nix compatibility mode. Expect some limitations and differences in behavior."
-          (
-            pkgs.callPackage ./upstreamCompat.nix {
-              nixFork = inputs.nixFork;
-              nixpkgs = inputs.nixpkgs;
-              nix-appimage = inputs.nix-appimage;
-              flake-utils = inputs.flake-utils;
-              systems = inputs.systems;
-              inherit
-                src
-                mainFile
-                config
-                target
-                extraTargets
-                ;
-            }
-          )
+        throw "U have to use the nix fork to evaluate."
     else
       let
         modules' = if src != null then [ ("${src}/${mainFile}") ] else modules;
