@@ -10,9 +10,8 @@
     treefmt-nix.url = "github:numtide/treefmt-nix";
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
     wechselbalg = {
-      #type = "git";
-      #url = "https://rad-node.menzel.lol/rad:zpRitanyyPyavYSf6RWXeXry864M.git";
-      url = "git+file:///home/leonard/Projekte/wechselbalg";
+      type = "git";
+      url = "https://rad-node.menzel.lol/rad:zpRitanyyPyavYSf6RWXeXry864M.git";
     };
   };
 
