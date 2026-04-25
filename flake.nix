@@ -75,6 +75,7 @@
               inputs.nixFork.packages.${system}.nix
               pkgs.nodejs
               pkgs.nixd
+              pkgs.lldb
               (pkgs.writeShellScriptBin "clangd" ''
                 #!/bin/sh
                 exec "${pkgs.clang-tools}/bin/clangd" --query-driver="$(which g++)" $@
@@ -92,6 +93,10 @@
             CMAKE_EXPORT_COMPILE_COMMANDS = true;
             LANG = "C.UTF-8";
             shellHook = ''
+              # Qt/KDE runtime paths so locally-built (unwrapped) binaries find QML modules & plugins.
+              # NIXPKGS_QML_SEARCH_PATHS is populated by wrapQtAppsHook from all Qt/KDE buildInputs.
+              export QML2_IMPORT_PATH="$NIXPKGS_QML_SEARCH_PATHS''${QML2_IMPORT_PATH:+:$QML2_IMPORT_PATH}"
+
               # Generate .clangd config with Qt base include paths and query-driver.
               # CMake's compile_commands.json only has per-module dirs (e.g. include/QtWidgets)
               # but not the parent dirs needed to resolve transitive includes like
