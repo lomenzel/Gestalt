@@ -75,12 +75,18 @@
               inputs.nixFork.packages.${system}.nix
               pkgs.nodejs
               pkgs.nixd
-              pkgs.kdePackages.qtdeclarative
               (pkgs.writeShellScriptBin "clangd" ''
                 #!/bin/sh
                 exec "${pkgs.clang-tools}/bin/clangd" --query-driver="$(which g++)" $@
               '')
-              # pkgs.clang-tools
+              (pkgs.writeShellScriptBin "qmlls" ''
+                #!/bin/sh
+                exec "${pkgs.kdePackages.qtdeclarative}/bin/qmlls" \
+                      --no-cmake-calls \
+                      -I ${pkgs.kdePackages.qtdeclarative}/lib/qt-6/qml \
+                      -I ${pkgs.kdePackages.kirigami.unwrapped}/lib/qt-6/qml \
+                       $@
+              '')
             ]
             ++ old.buildInputs;
             CMAKE_EXPORT_COMPILE_COMMANDS = true;

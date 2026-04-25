@@ -29,8 +29,8 @@
             ninja
             kcoreaddons
           ];
-          APP_TITLE = ir.meta.title;
-          APP_NAME = ir.meta.name;
+        APP_TITLE = ir.meta.title;
+        APP_NAME = ir.meta.name;
         #makeFlags = [ "APP_NAME=${finalAttrs.pname}" ];
       });
     effects = (import ../defaultCapabilities.nix).Effects;
