@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.20)
 
 set(APP_NAME $ENV{APP_NAME})
 set(APP_TITLE $ENV{APP_TITLE})
+set(APP_LIB_PATH $ENV{APP_LIB_PATH})
 
 project(${APP_NAME})
 

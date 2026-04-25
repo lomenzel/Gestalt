@@ -15,11 +15,14 @@
         pname = ir.meta.name;
         version = ir.meta.version;
         src = ./.;
-        nativeBuildInputs = [
-          #appLib
-          pkgs.kdePackages.wrapQtAppsHook
+        nativeBuildInputs = with pkgs; [
+          kdePackages.wrapQtAppsHook
+          kdePackages.extra-cmake-modules
         ];
-        buildInputs =
+        buildInputs = [
+          appLib
+        ]
+        ++ (
           with pkgs;
           with kdePackages;
           [
@@ -28,17 +31,43 @@
             kirigami
             ninja
             kcoreaddons
-          ];
+          ]
+        );
         APP_TITLE = ir.meta.title;
         APP_NAME = ir.meta.name;
-        #makeFlags = [ "APP_NAME=${finalAttrs.pname}" ];
+        APP_LIB_PATH = "${appLib}";
       });
     effects = (import ../defaultCapabilities.nix).Effects;
     components = {
-      actionGroup = x: { };
-      displayValue = x: { };
-      action = x: { };
-      section = x: { };
+      displayValue =
+        {
+          label,
+          tooltip ? "",
+          value,
+          ...
+        }:
+        {
+          _type = "displayValue";
+          inherit label tooltip value;
+        };
+      action =
+        {
+          name,
+          tooltip ? "",
+          onClick,
+          ...
+        }:
+        {
+          _type = "action";
+          inherit name tooltip onClick;
+        };
+      actionGroup =
+        { actions, ... }:
+        {
+          _type = "actionGroup";
+          actions = lib.mapAttrsToList (id: a: a // { inherit id; }) actions;
+        };
+      section = x: x;
     };
     module = ./module.nix;
   };
