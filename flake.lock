@@ -468,11 +468,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1776512555,
-        "narHash": "sha256-kUV2Jc3O/Mb8TT4Z9SUj+GfM+vumYd/rbrqJZ3SQCWw=",
+        "lastModified": 1777057559,
+        "narHash": "sha256-3ANr3e+4LgOw5+qTz4s5X9DOA+Bh8+kMAnKUBQz4D/k=",
         "ref": "refs/heads/master",
-        "rev": "4abce18e2dc36286f7d54419d9d2eaaa7bd66240",
-        "revCount": 43,
+        "rev": "f77a4e10efc9eaf532bfb26bc097d85fa619c3c6",
+        "revCount": 45,
         "type": "git",
         "url": "https://rad-node.menzel.lol/rad:zpRitanyyPyavYSf6RWXeXry864M.git"
       },
