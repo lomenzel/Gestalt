@@ -1,452 +1,487 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title id="app-title">Gestalt App</title>
     <style>
-        :root {
-            --accent: #3b82f6;
-            --accent-hover: #2563eb;
-            --danger: #ef4444;
-            --bg: #f8fafc;
-            --card-bg: #ffffff;
-            --text: #1e293b;
-            --text-muted: #94a3b8;
-            --border: #e2e8f0;
-            --radius: 8px;
-            --shadow: 0 1px 3px rgba(0, 0, 0, .1);
-        }
+      :root {
+        --accent: #3b82f6;
+        --accent-hover: #2563eb;
+        --danger: #ef4444;
+        --bg: #f8fafc;
+        --card-bg: #ffffff;
+        --text: #1e293b;
+        --text-muted: #94a3b8;
+        --border: #e2e8f0;
+        --radius: 8px;
+        --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-        }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+      }
 
-        header {
-            background: var(--card-bg);
-            border-bottom: 1px solid var(--border);
-            padding: 16px 24px;
-            box-shadow: var(--shadow);
-        }
+      header {
+        background: var(--card-bg);
+        border-bottom: 1px solid var(--border);
+        padding: 16px 24px;
+        box-shadow: var(--shadow);
+      }
 
-        header h1 {
-            font-size: 1.25rem;
-            font-weight: 600;
-        }
+      header h1 {
+        font-size: 1.25rem;
+        font-weight: 600;
+      }
 
-        main {
-            max-width: 640px;
-            margin: 24px auto;
-            padding: 0 16px;
-        }
+      main {
+        max-width: 640px;
+        margin: 24px auto;
+        padding: 0 16px;
+      }
 
-        .section {
-            margin-bottom: 16px;
-        }
+      .section {
+        margin-bottom: 16px;
+      }
 
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 16px;
-            box-shadow: var(--shadow);
-        }
+      .card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 16px;
+        box-shadow: var(--shadow);
+      }
 
-        .card-label {
-            font-size: .85rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: .05em;
-            margin-bottom: 8px;
-        }
+      .card-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 8px;
+      }
 
-        .card-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            text-align: center;
-            padding: 12px 0;
-        }
+      .card-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        text-align: center;
+        padding: 12px 0;
+      }
 
-        .action-group {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
+      .action-group {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
 
-        button {
-            cursor: pointer;
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 8px 20px;
-            font-size: .95rem;
-            font-weight: 500;
-            background: var(--card-bg);
-            color: var(--text);
-            transition: all .15s;
-        }
+      button {
+        cursor: pointer;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 8px 20px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        background: var(--card-bg);
+        color: var(--text);
+        transition: all 0.15s;
+      }
 
-        button:hover {
-            background: var(--bg);
-            border-color: var(--accent);
-            color: var(--accent);
-        }
+      button:hover {
+        background: var(--bg);
+        border-color: var(--accent);
+        color: var(--accent);
+      }
 
-        button.primary {
-            background: var(--accent);
-            color: #fff;
-            border-color: var(--accent);
-        }
+      button.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
 
-        button.primary:hover {
-            background: var(--accent-hover);
-        }
+      button.primary:hover {
+        background: var(--accent-hover);
+      }
 
-        .text-important {
-            color: var(--accent);
-            font-weight: 700;
-        }
+      .text-important {
+        color: var(--accent);
+        font-weight: 700;
+      }
 
-        .text-muted {
-            color: var(--text-muted);
-        }
+      .text-muted {
+        color: var(--text-muted);
+      }
 
-        .text-code {
-            font-family: 'SF Mono', Consolas, monospace;
-            background: var(--bg);
-            padding: 2px 6px;
-            border-radius: 4px;
-        }
+      .text-code {
+        font-family: "SF Mono", Consolas, monospace;
+        background: var(--bg);
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
 
-        .progress-bar-container {
-            background: var(--border);
-            border-radius: 999px;
-            height: 8px;
-            overflow: hidden;
-        }
+      .progress-bar-container {
+        background: var(--border);
+        border-radius: 999px;
+        height: 8px;
+        overflow: hidden;
+      }
 
-        .progress-bar-fill {
-            background: var(--accent);
-            height: 100%;
-            transition: width .3s;
-            border-radius: 999px;
-        }
+      .progress-bar-fill {
+        background: var(--accent);
+        height: 100%;
+        transition: width 0.3s;
+        border-radius: 999px;
+      }
 
-        .spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid var(--border);
-            border-top-color: var(--accent);
-            border-radius: 50%;
-            animation: spin .6s linear infinite;
-        }
+      .spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--border);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+      }
 
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
         }
+      }
 
-        #build-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(248, 250, 252, 0.85);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 999;
-            flex-direction: column;
-            gap: 12px;
-        }
+      #build-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(248, 250, 252, 0.85);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 999;
+        flex-direction: column;
+        gap: 12px;
+      }
 
-        #build-overlay.active {
-            display: flex;
-        }
+      #build-overlay.active {
+        display: flex;
+      }
 
-        .build-spinner {
-            width: 36px;
-            height: 36px;
-            border: 3px solid var(--border);
-            border-top-color: var(--accent);
-            border-radius: 50%;
-            animation: spin .6s linear infinite;
-        }
+      .build-spinner {
+        width: 36px;
+        height: 36px;
+        border: 3px solid var(--border);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+      }
 
-        .build-label {
-            font-size: .85rem;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
+      .build-label {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        font-weight: 500;
+      }
 
-        #error-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(30, 41, 59, 0.95);
-            display: none;
-            z-index: 1000;
-            flex-direction: column;
-            padding: 24px;
-            overflow: auto;
-        }
+      #error-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(30, 41, 59, 0.95);
+        display: none;
+        z-index: 1000;
+        flex-direction: column;
+        padding: 24px;
+        overflow: auto;
+      }
 
-        #error-overlay.active {
-            display: flex;
-        }
+      #error-overlay.active {
+        display: flex;
+      }
 
-        #error-overlay h2 {
-            color: #ef4444;
-            font-size: 1rem;
-            margin-bottom: 12px;
-            font-weight: 600;
-        }
+      #error-overlay h2 {
+        color: #ef4444;
+        font-size: 1rem;
+        margin-bottom: 12px;
+        font-weight: 600;
+      }
 
-        #error-overlay pre {
-            color: #e2e8f0;
-            font-family: 'SF Mono', Consolas, monospace;
-            font-size: .8rem;
-            line-height: 1.5;
-            white-space: pre-wrap;
-            word-break: break-word;
-            flex: 1;
-            overflow: auto;
-        }
+      #error-overlay pre {
+        color: #e2e8f0;
+        font-family: "SF Mono", Consolas, monospace;
+        font-size: 0.8rem;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        word-break: break-word;
+        flex: 1;
+        overflow: auto;
+      }
 
-        #error-overlay button {
-            align-self: flex-end;
-            margin-bottom: 8px;
-            background: transparent;
-            border: 1px solid #94a3b8;
-            color: #e2e8f0;
-            padding: 4px 12px;
-            font-size: .8rem;
-        }
+      #error-overlay button {
+        align-self: flex-end;
+        margin-bottom: 8px;
+        background: transparent;
+        border: 1px solid #94a3b8;
+        color: #e2e8f0;
+        padding: 4px 12px;
+        font-size: 0.8rem;
+      }
 
-        #error-overlay button:hover {
-            border-color: #e2e8f0;
-        }
+      #error-overlay button:hover {
+        border-color: #e2e8f0;
+      }
     </style>
-</head>
+  </head>
 
-<body>
-    <div id="build-overlay" class="active"><span class="build-spinner"></span><span class="build-label">Building…</span>
+  <body>
+    <div id="build-overlay" class="active">
+      <span class="build-spinner"></span
+      ><span class="build-label">Building…</span>
     </div>
-    <div id="error-overlay"><button onclick="this.parentElement.classList.remove('active')">Dismiss</button>
-        <h2>Build Failed</h2>
-        <pre id="error-log"></pre>
+    <div id="error-overlay">
+      <button onclick="this.parentElement.classList.remove('active')">
+        Dismiss
+      </button>
+      <h2>Build Failed</h2>
+      <pre id="error-log"></pre>
     </div>
     <header>
-        <h1 id="page-title"></h1>
+      <h1 id="page-title"></h1>
     </header>
     <main id="app"></main>
 
     <script>
-        let appData = null;
-        let state = null;
+      let appData = null;
+      let state = null;
 
-        function loadApp(code) {
-            const wrapped = code.replace(/^let app = /m, 'return ');
-            const newApp = new Function(wrapped)();
-            if (!appData) {
-                appData = newApp.asSet();
-                state = appData.initialState;
+      function loadApp(code) {
+        const wrapped = code.replace(/^let app = /m, "return ");
+        const newApp = new Function(wrapped)();
+        if (!appData) {
+          appData = newApp.asSet();
+          state = appData.initialState;
+        } else {
+          appData = newApp.asSet();
+        }
+      }
+
+      // Initial load
+      fetch("/app.js")
+        .then((r) => {
+          if (!r.ok)
+            return r.text().then((t) => {
+              throw new Error(t);
+            });
+          return r.text();
+        })
+        .then((code) => {
+          loadApp(code);
+          document.getElementById("build-overlay").classList.remove("active");
+          render();
+        })
+        .catch((err) => {
+          document.getElementById("build-overlay").classList.remove("active");
+          document.getElementById("error-log").textContent = err.message;
+          document.getElementById("error-overlay").classList.add("active");
+        });
+
+      function safeGet(obj, attr) {
+        try {
+          return obj[attr];
+        } catch {
+          return undefined;
+        }
+      }
+
+      function getAnnotation(annotations, name) {
+        if (!annotations) return false;
+        const list = annotations.asList
+          ? annotations.asList()
+          : Array.isArray(annotations)
+            ? annotations
+            : [];
+        return list.some((a) => {
+          const s = a.asSet ? a.asSet() : a;
+          return (
+            s.name === name ||
+            (s.name && s.name.asString && s.name.asString() === name)
+          );
+        });
+      }
+
+      function valToString(v) {
+        if (v === null || v === undefined) return "";
+        if (typeof v === "object" && v.asString) return v.asString();
+        return String(v);
+      }
+
+      function render() {
+        if (!appData) return;
+        const view = appData.view.call(state);
+        const tree = view.asSet ? view.asSet() : view;
+
+        const title = tree.title ? valToString(tree.title) : "Untitled";
+        document.getElementById("page-title").textContent = title;
+        document.getElementById("app-title").textContent = title;
+
+        const sections = tree.sections.asList
+          ? tree.sections.asList()
+          : tree.sections;
+        const container = document.getElementById("app");
+        container.innerHTML = "";
+
+        for (const sec of sections) {
+          const s = sec.asSet ? sec.asSet() : sec;
+          const content = s.content.asSet ? s.content.asSet() : s.content;
+          const type = content._type ? valToString(content._type) : null;
+
+          const div = document.createElement("div");
+          div.className = "section";
+
+          if (type === "displayValue") {
+            const annotations = safeGet(content, "annotations");
+            let valueClass = "card-value";
+            if (getAnnotation(annotations, "important"))
+              valueClass += " text-important";
+            if (getAnnotation(annotations, "muted"))
+              valueClass += " text-muted";
+            if (getAnnotation(annotations, "code")) valueClass += " text-code";
+
+            const label = valToString(content.label);
+            const value = valToString(content.value);
+            const tooltip = valToString(safeGet(content, "tooltip") || "");
+
+            if (getAnnotation(annotations, "progressbar")) {
+              const pct = (parseFloat(value) * 100).toFixed(0);
+              div.innerHTML = `<div class="card"><div class="card-label">${esc(label)}</div><div class="progress-bar-container"><div class="progress-bar-fill" style="width:${pct}%"></div></div></div>`;
+            } else if (getAnnotation(annotations, "progressspinner")) {
+              div.innerHTML = `<div class="card"><div class="card-label">${esc(label)}</div><div style="text-align:center;padding:12px"><span class="spinner"></span></div></div>`;
             } else {
-                appData = newApp.asSet();
+              div.innerHTML = `<div class="card"${tooltip ? ` title="${esc(tooltip)}"` : ""}><div class="card-label">${esc(label)}</div><div class="${valueClass}">${esc(value)}</div></div>`;
             }
-        }
+          } else if (type === "actionGroup") {
+            const actions = content.actions.asList
+              ? content.actions.asList()
+              : content.actions;
+            const group = document.createElement("div");
+            group.className = "action-group";
+            for (const act of actions) {
+              const a = act.asSet ? act.asSet() : act;
+              const btn = document.createElement("button");
+              btn.textContent = valToString(a.name);
+              const btnTooltip = safeGet(a, "tooltip");
+              if (btnTooltip) btn.title = valToString(btnTooltip);
 
-        // Initial load
-        fetch('/app.js')
-            .then(r => {
-                if (!r.ok) return r.text().then(t => { throw new Error(t); });
-                return r.text();
-            })
-            .then(code => {
+              const annotations = safeGet(a, "annotations");
+              if (getAnnotation(annotations, "primary"))
+                btn.classList.add("primary");
+
+              btn.addEventListener("click", () => {
+                if (a.onClick && a.onClick.call) {
+                  const result = a.onClick.call(state);
+                  const r = result.asSet ? result.asSet() : result;
+                  const rState = safeGet(r, "state");
+                  const rEffect = safeGet(r, "effect");
+                  if (rState) {
+                    state = state.update
+                      ? state.update(rState)
+                      : Object.assign({}, state, rState);
+                  } else if (rEffect) {
+                    // has effect but maybe also state keys
+                    const cleaned = {};
+                    for (const [k, v] of Object.entries(r)) {
+                      if (k !== "effect") cleaned[k] = v;
+                    }
+                    if (Object.keys(cleaned).length > 0) {
+                      state = state.update
+                        ? state.update(cleaned)
+                        : Object.assign({}, state, cleaned);
+                    }
+                  } else {
+                    state = state.update
+                      ? state.update(result)
+                      : Object.assign({}, state, r);
+                  }
+                  handleEffect(rEffect);
+                  render();
+                }
+              });
+              group.appendChild(btn);
+            }
+            div.appendChild(group);
+          }
+
+          container.appendChild(div);
+        }
+      }
+
+      function handleEffect(effect) {
+        if (!effect) return;
+        const e = effect.asSet ? effect.asSet() : effect;
+        const id = safeGet(e, "id");
+        if (!id || valToString(id) === "Noop") return;
+        if (valToString(id) === "Log")
+          console.log("[gestalt]", valToString(safeGet(e, "params")));
+      }
+
+      function esc(s) {
+        const d = document.createElement("div");
+        d.textContent = s;
+        return d.innerHTML;
+      }
+
+      render();
+
+      // Hot-reload via Server-Sent Events — swaps app code in-place, keeps state
+      (function () {
+        const overlay = document.getElementById("build-overlay");
+        const errorOverlay = document.getElementById("error-overlay");
+        const errorLog = document.getElementById("error-log");
+        const evtSource = new EventSource("/__events");
+        evtSource.onmessage = function (e) {
+          let msg;
+          try {
+            msg = JSON.parse(e.data);
+          } catch {
+            msg = e.data;
+          }
+          const event = typeof msg === "string" ? msg : msg.event;
+
+          if (event === "building") {
+            errorOverlay.classList.remove("active");
+            overlay.classList.add("active");
+          } else if (event === "reload") {
+            fetch("/app.js?t=" + Date.now())
+              .then((r) => r.text())
+              .then((code) => {
                 loadApp(code);
-                document.getElementById('build-overlay').classList.remove('active');
+                overlay.classList.remove("active");
                 render();
-            })
-            .catch(err => {
-                document.getElementById('build-overlay').classList.remove('active');
-                document.getElementById('error-log').textContent = err.message;
-                document.getElementById('error-overlay').classList.add('active');
-            });
-
-        function safeGet(obj, attr) {
-            try { return obj[attr]; }
-            catch { return undefined; }
-        }
-
-        function getAnnotation(annotations, name) {
-            if (!annotations) return false;
-            const list = annotations.asList ? annotations.asList() : (Array.isArray(annotations) ? annotations : []);
-            return list.some(a => {
-                const s = a.asSet ? a.asSet() : a;
-                return s.name === name || (s.name && s.name.asString && s.name.asString() === name);
-            });
-        }
-
-        function valToString(v) {
-            if (v === null || v === undefined) return '';
-            if (typeof v === 'object' && v.asString) return v.asString();
-            return String(v);
-        }
-
-        function render() {
-            if (!appData) return;
-            const view = appData.view.call(state);
-            const tree = view.asSet ? view.asSet() : view;
-
-            const title = tree.title ? valToString(tree.title) : 'Untitled';
-            document.getElementById('page-title').textContent = title;
-            document.getElementById('app-title').textContent = title;
-
-            const sections = tree.sections.asList ? tree.sections.asList() : tree.sections;
-            const container = document.getElementById('app');
-            container.innerHTML = '';
-
-            for (const sec of sections) {
-                const s = sec.asSet ? sec.asSet() : sec;
-                const content = s.content.asSet ? s.content.asSet() : s.content;
-                const type = content._type ? valToString(content._type) : null;
-
-                const div = document.createElement('div');
-                div.className = 'section';
-
-                if (type === 'displayValue') {
-                    const annotations = safeGet(content, 'annotations');
-                    let valueClass = 'card-value';
-                    if (getAnnotation(annotations, 'important')) valueClass += ' text-important';
-                    if (getAnnotation(annotations, 'muted')) valueClass += ' text-muted';
-                    if (getAnnotation(annotations, 'code')) valueClass += ' text-code';
-
-                    const label = valToString(content.label);
-                    const value = valToString(content.value);
-                    const tooltip = valToString(safeGet(content, 'tooltip') || '');
-
-                    if (getAnnotation(annotations, 'progressbar')) {
-                        const pct = (parseFloat(value) * 100).toFixed(0);
-                        div.innerHTML = `<div class="card"><div class="card-label">${esc(label)}</div><div class="progress-bar-container"><div class="progress-bar-fill" style="width:${pct}%"></div></div></div>`;
-                    } else if (getAnnotation(annotations, 'progressspinner')) {
-                        div.innerHTML = `<div class="card"><div class="card-label">${esc(label)}</div><div style="text-align:center;padding:12px"><span class="spinner"></span></div></div>`;
-                    } else {
-                        div.innerHTML = `<div class="card"${tooltip ? ` title="${esc(tooltip)}"` : ''}><div class="card-label">${esc(label)}</div><div class="${valueClass}">${esc(value)}</div></div>`;
-                    }
-                } else if (type === 'actionGroup') {
-                    const actions = content.actions.asList ? content.actions.asList() : content.actions;
-                    const group = document.createElement('div');
-                    group.className = 'action-group';
-                    for (const act of actions) {
-                        const a = act.asSet ? act.asSet() : act;
-                        const btn = document.createElement('button');
-                        btn.textContent = valToString(a.name);
-                        const btnTooltip = safeGet(a, 'tooltip');
-                        if (btnTooltip) btn.title = valToString(btnTooltip);
-
-                        const annotations = safeGet(a, 'annotations');
-                        if (getAnnotation(annotations, 'primary')) btn.classList.add('primary');
-
-                        btn.addEventListener('click', () => {
-                            if (a.onClick && a.onClick.call) {
-                                const result = a.onClick.call(state);
-                                const r = result.asSet ? result.asSet() : result;
-                                const rState = safeGet(r, 'state');
-                                const rEffect = safeGet(r, 'effect');
-                                if (rState) {
-                                    state = state.update ? state.update(rState) : Object.assign({}, state, rState);
-                                } else if (rEffect) {
-                                    // has effect but maybe also state keys
-                                    const cleaned = {};
-                                    for (const [k, v] of Object.entries(r)) {
-                                        if (k !== 'effect') cleaned[k] = v;
-                                    }
-                                    if (Object.keys(cleaned).length > 0) {
-                                        state = state.update ? state.update(cleaned) : Object.assign({}, state, cleaned);
-                                    }
-                                } else {
-                                    state = state.update ? state.update(result) : Object.assign({}, state, r);
-                                }
-                                handleEffect(rEffect);
-                                render();
-                            }
-                        });
-                        group.appendChild(btn);
-                    }
-                    div.appendChild(group);
-                }
-
-                container.appendChild(div);
-            }
-        }
-
-        function handleEffect(effect) {
-            if (!effect) return;
-            const e = effect.asSet ? effect.asSet() : effect;
-            const id = safeGet(e, 'id');
-            if (!id || valToString(id) === 'Noop') return;
-            if (valToString(id) === 'Log') console.log('[gestalt]', valToString(safeGet(e, 'params')));
-        }
-
-        function esc(s) {
-            const d = document.createElement('div');
-            d.textContent = s;
-            return d.innerHTML;
-        }
-
-        render();
-
-        // Hot-reload via Server-Sent Events — swaps app code in-place, keeps state
-        (function () {
-            const overlay = document.getElementById('build-overlay');
-            const errorOverlay = document.getElementById('error-overlay');
-            const errorLog = document.getElementById('error-log');
-            const evtSource = new EventSource('/__events');
-            evtSource.onmessage = function (e) {
-                let msg;
-                try { msg = JSON.parse(e.data); } catch { msg = e.data; }
-                const event = typeof msg === 'string' ? msg : msg.event;
-
-                if (event === 'building') {
-                    errorOverlay.classList.remove('active');
-                    overlay.classList.add('active');
-                } else if (event === 'reload') {
-                    fetch('/app.js?t=' + Date.now())
-                        .then(r => r.text())
-                        .then(code => {
-                            loadApp(code);
-                            overlay.classList.remove('active');
-                            render();
-                        })
-                        .catch(err => {
-                            console.error('[gestalt-dev] Hot reload failed:', err);
-                            overlay.classList.remove('active');
-                            errorLog.textContent = err.message;
-                            errorOverlay.classList.add('active');
-                        });
-                } else if (event === 'error') {
-                    overlay.classList.remove('active');
-                    errorLog.textContent = msg.data || 'Unknown build error';
-                    errorOverlay.classList.add('active');
-                }
-            };
-        })();
+              })
+              .catch((err) => {
+                console.error("[gestalt-dev] Hot reload failed:", err);
+                overlay.classList.remove("active");
+                errorLog.textContent = err.message;
+                errorOverlay.classList.add("active");
+              });
+          } else if (event === "error") {
+            overlay.classList.remove("active");
+            errorLog.textContent = msg.data || "Unknown build error";
+            errorOverlay.classList.add("active");
+          }
+        };
+      })();
     </script>
-</body>
-
+  </body>
 </html>

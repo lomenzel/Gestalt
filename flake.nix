@@ -71,7 +71,7 @@
         { system, pkgs }:
         {
           default = pkgs.mkShell {
-          # default = self.packages.${system}.counter.overrideAttrs (old: {
+            # default = self.packages.${system}.counter.overrideAttrs (old: {
             buildInputs = [
               inputs.nixFork.packages.${system}.nix
               pkgs.nodejs
@@ -113,7 +113,7 @@
                   - ${pkgs.kdePackages.qtdeclarative}/include
               EOF
             '';
-          # });
+            # });
           };
         }
       );

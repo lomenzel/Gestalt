@@ -30,7 +30,8 @@
         };
 
         app = target.buildApplication ir;
-      in (app.overrideAttrs (old: {
+      in
+      (app.overrideAttrs (old: {
         passthru = (old.passthru or { }) // {
           extraTargets =
             old.passthru.extraTargets or { }

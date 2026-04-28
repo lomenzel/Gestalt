@@ -1,33 +1,33 @@
-{ lib, ... }:
-{
-  view = {config,...}: {
+let
+  inherit (import ../../lib/viewSchema.nix) mkOpt types;
+
+  sectionType = types.submodule {
     options = {
-      page = {
-        sections = lib.mkOption {
-          type = #lib.types.raw;
-             lib.types.attrsOf (
-            lib.types.submodule {
-              options.content = lib.mkOption {
-                type = lib.types.raw;
-              };
-              options.order = lib.mkOption {
-                type = lib.types.nullOr lib.types.int;
-                default = null;
-              };
-            }
-          );
-        };
-        title = lib.mkOption {
-          type = lib.types.str;
-          default = "Untitled Page";
-        };
-      };
-      componentTree = lib.mkOption {
-        type =  lib.types.raw;
-        readOnly = true;
-        default = "${lib.concatStringsSep "\n" ((lib.attrNames config.page.sections))}";
+      content = mkOpt { type = types.raw; };
+      order = mkOpt {
+        type = types.nullOr types.int;
+        default = null;
       };
     };
-    
   };
+in
+{
+  view =
+    { config, ... }:
+    {
+      options = {
+        page = {
+          sections = mkOpt { type = types.attrsOf sectionType; };
+          title = mkOpt {
+            type = types.str;
+            default = "Untitled Page";
+          };
+        };
+        componentTree = mkOpt {
+          type = types.raw;
+          readOnly = true;
+          default = builtins.concatStringsSep "\n" (builtins.attrNames config.page.sections);
+        };
+      };
+    };
 }

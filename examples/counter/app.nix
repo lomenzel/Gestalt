@@ -65,7 +65,7 @@ in
               reset = action {
                 name = "Reset";
                 tooltip = "Reset the counter to 0";
-                onClick = state :{
+                onClick = state: {
                   state.counter = 1000;
                   effect = Noop; # does nothing, just for demonstration
                 };

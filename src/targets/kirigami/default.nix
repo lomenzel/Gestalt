@@ -65,10 +65,12 @@
         { actions, ... }:
         {
           _type = "actionGroup";
-          actions = lib.mapAttrsToList (id: a: a // { inherit id; }) actions;
+          # Hand-rolled to avoid pulling lib.mapAttrsToList (and transitively
+          # all of lib) into the reified IR.
+          actions = map (id: actions.${id} // { inherit id; }) (builtins.attrNames actions);
         };
       section = x: x;
     };
-    module = ./module.nix;
+    module = ../../lib/standardPageView.nix;
   };
 }
