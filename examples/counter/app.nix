@@ -16,7 +16,7 @@ let
 in
 {
   meta = {
-    name = "example-counter";
+    name = "counter";
     title = "Gestalt Counter";
     version = "0.0.1";
     author.name = "Leonard Menzel";
@@ -61,6 +61,14 @@ in
                 };
                 # if has key "state" or "effect" it merges state into state and runs effect.
                 # will throw on invalid return value
+              };
+              reset = action {
+                name = "Reset";
+                tooltip = "Reset the counter to 0";
+                onClick = state :{
+                  state.counter = 1000;
+                  effect = Noop; # does nothing, just for demonstration
+                };
               };
             };
           };

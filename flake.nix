@@ -70,7 +70,8 @@
       devShells = eachSystem (
         { system, pkgs }:
         {
-          default = self.packages.${system}.counter.overrideAttrs (old: {
+          default = pkgs.mkShell {
+          # default = self.packages.${system}.counter.overrideAttrs (old: {
             buildInputs = [
               inputs.nixFork.packages.${system}.nix
               pkgs.nodejs
@@ -88,8 +89,8 @@
                       -I ${pkgs.kdePackages.kirigami.unwrapped}/lib/qt-6/qml \
                        $@
               '')
-            ]
-            ++ old.buildInputs;
+            ];
+            nativeBuildInputs = [ ];
             CMAKE_EXPORT_COMPILE_COMMANDS = true;
             LANG = "C.UTF-8";
             shellHook = ''
@@ -112,7 +113,8 @@
                   - ${pkgs.kdePackages.qtdeclarative}/include
               EOF
             '';
-          });
+          # });
+          };
         }
       );
 
@@ -139,6 +141,16 @@
         self.packages.${system}
         // {
           fmt = treefmtEval.${system}.config.build.check self;
+        }
+      );
+
+      apps = eachSystem (
+        { system, ... }:
+        {
+          counter-dev = {
+            type = "app";
+            program = "${self.packages.${system}.counter.extraTargets.web.passthru.devServer}/bin/counter-dev";
+          };
         }
       );
     };
