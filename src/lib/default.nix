@@ -11,9 +11,12 @@ in
     { target, modules, ... }:
     let
       r = lib.evalModules {
-        modules = modules ++ [
-          ../modules/default.nix
-        ] ++ target.modules;
+        modules =
+          modules
+          ++ [
+            ../modules/default.nix
+          ]
+          ++ target.modules;
         specialArgs = {
           inherit lib;
           inherit target;

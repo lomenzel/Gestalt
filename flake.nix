@@ -76,7 +76,6 @@
           );
         };
 
-
       formatter = eachSystem ({ system, ... }: treefmtEval.${system}.config.build.wrapper);
 
       checks = eachSystem (
