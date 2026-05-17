@@ -2,10 +2,8 @@
 (pkgs.lib.evalModules {
   modules = [
     ./buildApplication.nix
-    ../targets/test/default.nix
-    ../targets/jstest/default.nix
-    ../targets/kirigami/default.nix
-    ../targets/web/default.nix
+    "${inputs.kirigami-target}/default.nix"
+    "${inputs.web-target}/default.nix"
     {
       options.gestaltPlatform.buildApplication = pkgs.lib.mkOption {
         type = pkgs.lib.types.raw;
@@ -31,5 +29,7 @@
     inherit (pkgs) lib;
     inherit pkgs;
     inherit inputs;
+    defaultCapabilities = import ./defaultCapabilities.nix;
+    standardPageView = import ../lib/standardPageView.nix;
   };
 }).config.gestaltPlatform

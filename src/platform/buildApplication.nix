@@ -19,7 +19,7 @@
       if src == null then
         throw "You must provide a source directory instead of modules when using upstream nix compatibility mode."
       else
-        throw "U have to use the nix fork to evaluate."
+        throw "U have to use the nix fork to evaluate. upstream nix mode is broken for now"
     else
       let
         modules' = if src != null then [ ("${src}/${mainFile}") ] else modules;
