@@ -9,12 +9,6 @@
         type = pkgs.lib.types.raw;
       };
       options.gestaltPlatform.targets = {
-        test = pkgs.lib.mkOption {
-          type = pkgs.lib.types.raw;
-        };
-        jstest = pkgs.lib.mkOption {
-          type = pkgs.lib.types.raw;
-        };
         kirigami = pkgs.lib.mkOption {
           type = pkgs.lib.types.raw;
         };
@@ -22,6 +16,7 @@
           type = pkgs.lib.types.raw;
         };
       };
+      
 
     }
   ];

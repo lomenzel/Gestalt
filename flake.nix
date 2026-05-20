@@ -1,5 +1,6 @@
 {
   inputs = {
+    nixFork.url = "github:lomenzel/nix";
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nix-appimage.url = "github:ralismark/nix-appimage";
     nix-appimage.inputs.nixpkgs.follows = "nixpkgs";
@@ -65,7 +66,8 @@
             prev.lib
             // import ./src/lib {
               inherit (final) lib;
-            };
+            }
+            // (wechselbalg.overlays.default final prev).lib;
         }
         // {
           gestaltPlatform = (
