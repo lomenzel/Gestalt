@@ -178,11 +178,11 @@
     "kirigami-target": {
       "flake": false,
       "locked": {
-        "lastModified": 1779277917,
-        "narHash": "sha256-iCvb+A8M8OT9QbBN4BCyNIM6YK8C2EG61LLw6/3NFlM=",
+        "lastModified": 1779379084,
+        "narHash": "sha256-3o4tzLd7NQalkVtXpAnqUTFas9R3W/U40d1MjPj5QNA=",
         "ref": "refs/heads/master",
-        "rev": "32c49cbcf5c821accdc03ed1570d88c432f3aa63",
-        "revCount": 3,
+        "rev": "304974b409476b3b8151668509d9925c940e9631",
+        "revCount": 4,
         "type": "git",
         "url": "https://rad-node.menzel.lol/rad:z22uYeGHbYxD14pCZyzWi4577Vej7.git"
       },
@@ -340,11 +340,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1778869304,
-        "narHash": "sha256-30sZNZoA1cqF5JNO9fVX+wgiQYjB7HJqqJ4ztCDeBZE=",
+        "lastModified": 1779259093,
+        "narHash": "sha256-7DKWmH23hL2eYdkxCKeqj2i+yljTKuU+3Nk1UPHOnxc=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "d233902339c02a9c334e7e593de68855ad26c4cb",
+        "rev": "d99b013d5d1931ad77fe3912ed218170dec5d9a4",
         "type": "github"
       },
       "original": {
@@ -482,11 +482,11 @@
     "web-target": {
       "flake": false,
       "locked": {
-        "lastModified": 1779278172,
-        "narHash": "sha256-1+sGX3oFUP2cW4dEzODgTuIrif0BESZyPMA5OGF4BhA=",
+        "lastModified": 1779379323,
+        "narHash": "sha256-xpaiycc2nMpX1y40fi+B3HdrjR+6k/l87uggOAGFKIs=",
         "ref": "refs/heads/master",
-        "rev": "8e5429452cdfe89651b32c9caa895a0cd9447a12",
-        "revCount": 3,
+        "rev": "76b31b621768cf6a27623726befa8587bc2cd924",
+        "revCount": 4,
         "type": "git",
         "url": "https://rad-node.menzel.lol/rad:zCfRPjVLN6H9TqATGjMspb86p1ZZ.git"
       },

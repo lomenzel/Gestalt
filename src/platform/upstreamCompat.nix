@@ -24,6 +24,8 @@ let
         nixpkgs.url = "path:${nixpkgs}";
         wechselbalg.url = "path:${wechselbalg}";
         gestalt.url = "path:${self}";
+        gestalt.inputs.kirigami-target.follows = "kirigami-target";
+        gestalt.inputs.web-target.follows = "web-target";
         kirigami-target = {
           flake = false;
           url = "path:${kirigami-target}";
