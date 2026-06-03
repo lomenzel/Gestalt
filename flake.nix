@@ -10,18 +10,7 @@
     treefmt-nix.url = "github:numtide/treefmt-nix";
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
     wechselbalg = {
-      type = "git";
-      url = "https://rad-node.menzel.lol/rad:zpRitanyyPyavYSf6RWXeXry864M.git";
-    };
-    web-target = {
-      flake = false;
-      type = "git";
-      url = "https://rad-node.menzel.lol/rad:zCfRPjVLN6H9TqATGjMspb86p1ZZ.git";
-    };
-    kirigami-target = {
-      flake = false;
-      type = "git";
-      url = "https://rad-node.menzel.lol/rad:z22uYeGHbYxD14pCZyzWi4577Vej7.git";
+      url = "git+https://rad-node.menzel.lol/rad:zpRitanyyPyavYSf6RWXeXry864M.git";
     };
   };
 

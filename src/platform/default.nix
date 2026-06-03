@@ -1,30 +1,78 @@
 { pkgs, inputs, ... }:
-(pkgs.lib.evalModules {
-  modules = [
-    ./buildApplication.nix
-    "${inputs.kirigami-target}/default.nix"
-    "${inputs.web-target}/default.nix"
+let
+  lib = pkgs.lib;
+in
+{
+  makeTarget =
+    t:
+    t {
+      inherit (pkgs) lib;
+      inherit pkgs;
+      defaultCapabilities = import ./defaultCapabilities.nix;
+      standardPageView = import ../lib/standardPageView.nix;
+    };
+  buildApplication =
     {
-      options.gestaltPlatform.buildApplication = pkgs.lib.mkOption {
-        type = pkgs.lib.types.raw;
-      };
-      options.gestaltPlatform.targets = {
-        kirigami = pkgs.lib.mkOption {
-          type = pkgs.lib.types.raw;
-        };
-        web = pkgs.lib.mkOption {
-          type = pkgs.lib.types.raw;
-        };
-      };
-      
+      modules ? throw "You must provide a list of modules to build an application.",
+      target ? pkgs.gestaltPlatform.targets.kirigami,
+      extraTargets ? pkgs.gestaltPlatform.targets,
+      useUpstreamNix ? (!builtins.hasAttr "reify" builtins) || !builtins.hasAttr "sameFunction" builtins,
+      src ? null,
+      mainFile ? "app.nix",
+    }:
+    (
+      if useUpstreamNix then
+        if src == null then
+          throw "You must provide a source directory instead of modules when using upstream nix compatibility mode."
+        else
+          pkgs.lib.warn
+            "Upstream nix compat mode using recursive nix is very experimental. expect critical errors"
+            (
+              pkgs.callPackage ./upstreamCompat.nix {
+                inherit (inputs)
+                  nixFork
+                  nixpkgs
+                  wechselbalg
+                  self
+                  ;
+                inherit
+                  inputs
+                  src
+                  mainFile
+                  target
+                  extraTargets
+                  pkgs
+                  ;
+                inherit (pkgs.gestaltPlatform) buildApplication;
+              }
+            )
+      else
+        let
+          modules' = if src != null then [ ("${src}/${mainFile}") ] else modules;
+          ir = pkgs.lib.mkGestaltIR {
+            inherit target;
+            modules = modules';
 
-    }
-  ];
-  specialArgs = {
-    inherit (pkgs) lib;
-    inherit pkgs;
-    inherit inputs;
-    defaultCapabilities = import ./defaultCapabilities.nix;
-    standardPageView = import ../lib/standardPageView.nix;
-  };
-}).config.gestaltPlatform
+          };
+
+          app = target.buildApplication ir;
+        in
+        (app.overrideAttrs (old: {
+          passthru = (old.passthru or { }) // {
+            extraTargets =
+              old.passthru.extraTargets or { }
+              // (lib.mapAttrs (
+                name: target:
+                target.buildApplication (
+                  lib.mkGestaltIR {
+                    inherit target;
+                    modules = modules';
+                  }
+                )
+              ) extraTargets);
+            publish = pkgs.gestaltPlatform.publish modules';
+          };
+        }))
+    );
+
+}

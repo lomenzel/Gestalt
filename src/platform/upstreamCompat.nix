@@ -7,7 +7,6 @@
   nixpkgs,
   pkgs,
   wechselbalg,
-  kirigami-target,
   inputs,
   self,
   buildApplication,
@@ -18,31 +17,55 @@ let
     target = pkgs.gestaltPlatform.targets.${builtins.trace target target.name};
     modules = [ "${src}/${mainFile}" ];
   };
+  inherit (pkgs) lib;
+
+  collectInputs =
+    prefix: inputs:
+    collectInputs' prefix inputs { }
+    |> map ({ name, path }: " --override-input ${name} path:${path} ")
+    |> lib.concatStringsSep "";
+
+  collectInputs' =
+    prefix: inputs: visitedPaths:
+    builtins.trace "collecting inputs for: ${prefix}" (
+      lib.attrsToList (lib.removeAttrs inputs [ "self" ])
+      |> map (
+        { name, value }:
+        let
+          path = if builtins.hasAttr "outPath" value then toString value.outPath else toString value;
+        in
+        if (builtins.hasAttr (builtins.unsafeDiscardStringContext path) visitedPaths) then
+          [ ]
+        else
+          [
+            {
+              name = "${prefix}/${name}";
+              inherit path;
+            }
+          ]
+          ++ (lib.optional (builtins.hasAttr "inputs" value) (
+            collectInputs' "${prefix}/${name}" value.inputs (
+              visitedPaths // { ${builtins.unsafeDiscardStringContext path} = true; }
+            )
+          ))
+      )
+      |> lib.flatten
+    );
   flake = pkgs.writeText "flake.nix" ''
     {
       inputs = {
-        nixpkgs.url = "path:${nixpkgs}";
-        wechselbalg.url = "path:${wechselbalg}";
-        gestalt.url = "path:${self}";
-        gestalt.inputs.kirigami-target.follows = "kirigami-target";
-        gestalt.inputs.web-target.follows = "web-target";
-        kirigami-target = {
-          flake = false;
-          url = "path:${kirigami-target}";
-        };
-        web-target = {
-          flake = false;
-          url = "path:${inputs.web-target}";
-        };
+        nixpkgs.url = "path:${nixpkgs.outPath}";
+        core.url = "path:${self.outPath}";
+        target.url = "path:${target.input.outPath}";
 
       };
-      outputs = { self, nixpkgs, gestalt, wechselbalg, ... }:
+      outputs = { self, nixpkgs, core, target, ... }:
         let
           pkgs = import nixpkgs {
             system = "${pkgs.stdenv.buildPlatform.system}";
             overlays = [
-              gestalt.overlays.default
-              wechselbalg.overlays.default
+              core.overlays.default
+              target.overlays.default
             ];
           };
         in
@@ -68,7 +91,8 @@ pkgs.stdenv.mkDerivation {
     cd sub
     ${
       nixFork.packages.${pkgs.stdenv.buildPlatform.system}.default
-    }/bin/nix build -L $pwd --impure --offline --extra-experimental-features 'flakes nix-command pipe-operators' --option flake-registry ""
+    }/bin/nix build -L $pwd --impure --offline --extra-experimental-features 'flakes nix-command pipe-operators' --option flake-registry "" \
+      ${collectInputs "core" inputs} ${collectInputs "target" target.input.inputs}
     ls -lah
     cp -r ./result $out
   '';
