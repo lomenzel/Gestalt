@@ -353,11 +353,11 @@
     },
     "nixpkgs_4": {
       "locked": {
-        "lastModified": 1775937108,
-        "narHash": "sha256-T8aI24YiAhc/QHtDhwkk8uYEZR1GD9Do5XjhdLs/sdo=",
+        "lastModified": 1780504645,
+        "narHash": "sha256-bOekm57FjhXpyhe+nerBf05QZekQsDJ3EXstM9RYVdA=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "b8055dcb464a4577a54732927c0a25c06dd4c5fe",
+        "rev": "ed96a58ad37d8797d0435475c51e201afaf81c57",
         "type": "github"
       },
       "original": {
@@ -448,11 +448,11 @@
         "nixpkgs": "nixpkgs_5"
       },
       "locked": {
-        "lastModified": 1775636079,
-        "narHash": "sha256-pc20NRoMdiar8oPQceQT47UUZMBTiMdUuWrYu2obUP0=",
+        "lastModified": 1780220602,
+        "narHash": "sha256-eynAfOmbmxJnkp7YewvCEbShNnnYJ9gLLqkzsYtBPeM=",
         "owner": "numtide",
         "repo": "treefmt-nix",
-        "rev": "790751ff7fd3801feeaf96d7dc416a8d581265ba",
+        "rev": "db947814a175b7ca6ded66e21383d938df01c227",
         "type": "github"
       },
       "original": {
@@ -468,11 +468,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1777057559,
-        "narHash": "sha256-3ANr3e+4LgOw5+qTz4s5X9DOA+Bh8+kMAnKUBQz4D/k=",
+        "lastModified": 1780505802,
+        "narHash": "sha256-0of27RW1ka2HZ4v+czg8OTrTZcwRoYB0kTrA9UgnM6E=",
         "ref": "refs/heads/master",
-        "rev": "f77a4e10efc9eaf532bfb26bc097d85fa619c3c6",
-        "revCount": 45,
+        "rev": "385573fdd35a71dbe9db574c11fc40b0ef20ec2f",
+        "revCount": 46,
         "type": "git",
         "url": "https://rad-node.menzel.lol/rad:zpRitanyyPyavYSf6RWXeXry864M.git"
       },
