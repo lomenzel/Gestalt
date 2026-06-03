@@ -175,22 +175,6 @@
         "type": "github"
       }
     },
-    "kirigami-target": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1779379084,
-        "narHash": "sha256-3o4tzLd7NQalkVtXpAnqUTFas9R3W/U40d1MjPj5QNA=",
-        "ref": "refs/heads/master",
-        "rev": "304974b409476b3b8151668509d9925c940e9631",
-        "revCount": 4,
-        "type": "git",
-        "url": "https://rad-node.menzel.lol/rad:z22uYeGHbYxD14pCZyzWi4577Vej7.git"
-      },
-      "original": {
-        "type": "git",
-        "url": "https://rad-node.menzel.lol/rad:z22uYeGHbYxD14pCZyzWi4577Vej7.git"
-      }
-    },
     "nix-appimage": {
       "inputs": {
         "flake-compat": "flake-compat",
@@ -340,11 +324,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1779259093,
-        "narHash": "sha256-7DKWmH23hL2eYdkxCKeqj2i+yljTKuU+3Nk1UPHOnxc=",
+        "lastModified": 1780336545,
+        "narHash": "sha256-vhVhuXzFrIOfcssC/9hDHx7MHzDKjF3keHuREOQqQiQ=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "d99b013d5d1931ad77fe3912ed218170dec5d9a4",
+        "rev": "4df1b885d76a54e1aa1a318f8d16fd6005b6401f",
         "type": "github"
       },
       "original": {
@@ -401,13 +385,11 @@
     "root": {
       "inputs": {
         "flake-utils": "flake-utils",
-        "kirigami-target": "kirigami-target",
         "nix-appimage": "nix-appimage",
         "nixFork": "nixFork",
         "nixpkgs": "nixpkgs_2",
         "systems": "systems_2",
         "treefmt-nix": "treefmt-nix",
-        "web-target": "web-target",
         "wechselbalg": "wechselbalg"
       }
     },
@@ -448,11 +430,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1775636079,
-        "narHash": "sha256-pc20NRoMdiar8oPQceQT47UUZMBTiMdUuWrYu2obUP0=",
+        "lastModified": 1780220602,
+        "narHash": "sha256-eynAfOmbmxJnkp7YewvCEbShNnnYJ9gLLqkzsYtBPeM=",
         "owner": "numtide",
         "repo": "treefmt-nix",
-        "rev": "790751ff7fd3801feeaf96d7dc416a8d581265ba",
+        "rev": "db947814a175b7ca6ded66e21383d938df01c227",
         "type": "github"
       },
       "original": {
@@ -477,22 +459,6 @@
         "owner": "numtide",
         "repo": "treefmt-nix",
         "type": "github"
-      }
-    },
-    "web-target": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1779379323,
-        "narHash": "sha256-xpaiycc2nMpX1y40fi+B3HdrjR+6k/l87uggOAGFKIs=",
-        "ref": "refs/heads/master",
-        "rev": "76b31b621768cf6a27623726befa8587bc2cd924",
-        "revCount": 4,
-        "type": "git",
-        "url": "https://rad-node.menzel.lol/rad:zCfRPjVLN6H9TqATGjMspb86p1ZZ.git"
-      },
-      "original": {
-        "type": "git",
-        "url": "https://rad-node.menzel.lol/rad:zCfRPjVLN6H9TqATGjMspb86p1ZZ.git"
       }
     },
     "wechselbalg": {
